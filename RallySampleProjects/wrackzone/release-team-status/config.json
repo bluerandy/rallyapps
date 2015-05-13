@@ -1,0 +1,17 @@
+{
+   "name": "Son of release-team-status",
+   "className": "CustomApp",
+   "server": "https://rally1.rallydev.com",
+   "sdk": "2.0rc3",
+   "javascript": [
+      "traverse.js",
+      "App.js",
+      "https://cdnjs.cloudflare.com/ajax/libs/async/1.22/async.min.js"
+   ],
+   "css": [
+      "app.css"
+   ],
+   "parents": [
+      "wrackzone/release-team-status"
+   ]
+}

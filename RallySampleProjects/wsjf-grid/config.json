@@ -1,0 +1,15 @@
+{
+   "name": "Son of wsjf_grid",
+   "className": "CustomApp",
+   "server": "https://rallyonprem.sys.cigna.com",
+   "sdk": "2.0rc3",
+   "javascript": [
+      "App.js"
+   ],
+   "css": [
+      "app.css"
+   ],
+   "parents": [
+      "RallyCommunity/WSJF_Grid"
+   ]
+}

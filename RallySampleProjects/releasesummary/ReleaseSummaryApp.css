@@ -1,0 +1,4 @@
+/* While printing, show entire app height-wise */
+.print-page .releasesummary {
+	height: 100%;
+}

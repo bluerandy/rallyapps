@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Son of MixedTypeGrid</title>
+
+<script type="text/javascript"
+	src="https://rally1.rallydev.com/apps/2.0rc3/sdk.js"></script>
+
+<script type="text/javascript">
+        Rally.onReady(function () {
+                var app=null;Ext.define("CustomApp",{extend:"Rally.app.App",requires:["Rally.ui.gridboard.plugin.GridBoardFieldPicker"],uses:["Ext.ux.exporter.Exporter"],componentCls:"app",launch:function(){app=this,this._myModels=[],this._myButton=this.add({xtype:"rallybutton",height:20,text:"Export to CSV",listeners:{scope:this,click:function(){var exporter=Ext.create("GridExporter",{});console.log("clicked",exporter),exporter.exportGrid(app._myGrid)}}}),this._boxcontainer=Ext.create("Ext.form.Panel",{title:"Select the Type of Items to Display in the Grid",width:500,bodyPadding:10,items:[{xtype:"checkboxgroup",columns:3,vertical:!0,listeners:{change:this._onCheck,scope:this},items:[{boxLabel:"Stories",name:"userstory",checked:!0},{boxLabel:"Defects",name:"defect",checked:!1},{boxLabel:"Features",name:"portfolioitem/feature",checked:!1}],scope:this}]}),this.add(this._boxcontainer);var filter="",timeboxScope=this.getContext().getTimeboxScope();timeboxScope&&(filter=timeboxScope.getQueryFilter()),this._myGrid=this.add({xtype:"rallygrid",enableBulkEdit:!0,columnCfgs:["FormattedID","Name","ScheduleState","Owner"],context:this.getContext(),storeConfig:{models:["userstory"],filters:[filter]}})},_onCheck:function(obj,value){var that=this,models=[];if(obj){console.log("obj: ",obj);var values=obj.getChecked();if(0===values.length)return alert("No Items Checked! You must select at least one item type"),void 0;var model;Ext.Array.each(values,function(type){model=type.getName(),console.log("model: ",model),models.push(model)}),console.log("grid: ",that._myGrid),that._myGrid.reconfigureWithModel(models);var filter="",timeboxScope=this.getContext().getTimeboxScope();timeboxScope&&(filter=timeboxScope.getQueryFilter());var store=this._myGrid.getStore();store.clearFilter(!0),store.filter(filter)}else console.log("Nothing checked"),alert("No Items Checked! You must select at least one work item type")},_updateGrid:function(myStore){console.log("Updating Grid"),this._myGrid.reconfigure(myStore)},onTimeboxScopeChange:function(newTimeboxScope){var newFilter=newTimeboxScope.getQueryFilter(),store=this._myGrid.getStore();store.clearFilter(!0),store.filter(newFilter),this._updateGrid(store)}});
+                Ext.define("GridExporter",{dateFormat:"Y-m-d g:i",exportGrid:function(grid){if(Ext.isIE)this._ieToExcel(grid);else{var data=this._getCSV(grid);window.location="data:text/csv;charset=utf8,"+encodeURIComponent(data)}},_escapeForCSV:function(string){return string.match(/,/)&&(string=string.match(/"/)?string.replace(/,/g,""):'"'+string+'"'),string},_getFieldText:function(fieldData){var text;return text=null===fieldData||void 0===fieldData?"":fieldData._refObjectName&&!fieldData.getMonth?fieldData._refObjectName:fieldData instanceof Date?Ext.Date.format(fieldData,this.dateFormat):fieldData.match?fieldData:""},_getFieldTextAndEscape:function(fieldData){var string=this._getFieldText(fieldData);return this._escapeForCSV(string)},_getCSV:function(grid){var cols=grid.columns,store=grid.store,data="",that=this;return Ext.Array.each(cols,function(col,index){col.hidden!==!0&&(data+=that._getFieldTextAndEscape(col.text)+",")}),data+="\n",store.each(function(record){var entry=record.getData();Ext.Array.each(cols,function(col,index){if(col.hidden!==!0){var fieldName=col.dataIndex,text=entry[fieldName];data+=that._getFieldTextAndEscape(text)+","}}),data+="\n"}),data},_ieGetGridData:function(grid,sheet){var that=this,resourceItems=grid.store.data.items,cols=grid.columns;Ext.Array.each(cols,function(col,colIndex){col.hidden!==!0&&(console.log("header: ",col.text),sheet.cells(1,colIndex+1).value=col.text)});var rowIndex=2;grid.store.each(function(record){var entry=record.getData();Ext.Array.each(cols,function(col,colIndex){if(col.hidden!==!0){var fieldName=col.dataIndex,text=entry[fieldName],value=that._getFieldText(text);sheet.cells(rowIndex,colIndex+1).value=value}}),rowIndex++})},_ieToExcel:function(grid){if(window.ActiveXObject){var xlApp,xlBook;try{xlApp=new ActiveXObject("Excel.Application"),xlBook=xlApp.Workbooks.Add()}catch(e){return Ext.Msg.alert("Error",'For the export to work in IE, you have to enable a security setting called "Initialize and script ActiveX control not marked as safe" from Internet Options -> Security -> Custom level..."'),void 0}xlBook.worksheets("Sheet1").activate();var XlSheet=xlBook.activeSheet;xlApp.visible=!0,this._ieGetGridData(grid,XlSheet),XlSheet.columns.autofit()}}});
+
+            Rally.launchApp('CustomApp', {
+                name:"Son of MixedTypeGrid",
+	            parentRepos:"sficarrotta/Multi-item-grid"
+            });
+
+        });
+    </script>
+
+
+<style type="text/css">
+</style>
+</head>
+<body>
+</body>
+</html>

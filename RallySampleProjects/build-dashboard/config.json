@@ -1,0 +1,16 @@
+{
+   "name": "Son of CI Build Report",
+   "className": "CustomApp",
+   "sdk": "2.0p4",
+   "javascript": [
+      "BuildDialog.js",
+      "App.js"
+   ],
+   "css": [
+      "app.css"
+   ],
+   "server": "https://rally1.rallydev.com",
+   "parents": [
+      "RallyCommunity/build-dashboard"
+   ]
+}

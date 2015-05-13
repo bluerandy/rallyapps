@@ -1,0 +1,24 @@
+{
+   "name": "Team Board",
+   "className": "Rally.apps.teamboard.TeamBoardApp",
+   "server": "https://rally1.rallydev.com",
+   "sdk": "2.0",
+   "javascript": [
+      "TeamBoardUtil.js",
+      "plugin/TeamBoardCardContentLeft.js",
+      "plugin/TeamBoardCardContentRight.js",
+      "plugin/TeamBoardCardPopover.js",
+      "TeamBoardCard.js",
+      "plugin/TeamBoardDropController.js",
+      "plugin/TeamBoardIterationAwarePlugin.js",
+      "plugin/TeamBoardUserIterationCapacity.js",
+      "plugin/TeamBoardWip.js",
+      "TeamBoardColumn.js",
+      "TeamBoardProjectRecordsLoader.js",
+      "TeamBoardSettings.js",
+      "TeamBoardApp.js"
+   ],
+   "css": [
+      "TeamBoardApp.css"
+   ]
+}

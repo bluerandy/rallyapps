@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Portfolio Item Bulk Update from CSV</title>
+    <!--  (c) 2015 Rally Software Development Corp.  All Rights Reserved. -->
+    <!--  Build Date: Thu Apr 23 2015 13:41:39 GMT-0600 (MDT) -->
+    
+    <script type="text/javascript">
+        var APP_BUILD_DATE = "Thu Apr 23 2015 13:41:39 GMT-0600 (MDT)";
+        var CHECKSUM = 13671554338;
+    </script>
+    
+ <!--[if IE]>
+<script type="text/javascript" src="//rally1.rallydev.com/apps/2.0rc3/sdk.js"></script>
+<![endif]-->
+<![if !IE]>
+<script type="text/javascript" src="/apps/2.0rc3/sdk.js"></script>
+<![endif]>
+
+    <script type="text/javascript">
+        Rally.onReady(function() {
+             
+/**
+ * A link that pops up a version dialog box
+ */
+
+Ext.define('Rally.technicalservices.InfoLink',{
+    extend: 'Ext.Component',
+    alias: 'widget.tsinfolink',
+    
+    /**
+     * @cfg {String} informationHtml
+     * Additional text to be displayed on the popup dialog (for exmaple,
+     * to add a description of the app's use or functionality)
+     */
+    informationHtml: null,
+    
+    /**
+     * 
+     * cfg {String} title
+     * The title for the dialog box
+     */
+     title: "Build Information",
+    
+    renderTpl: "<div id='{id}-infolinkWrap' class='tsinfolink'>i</div>",
+
+    initComponent: function() {
+        this.callParent(arguments);
+       
+    },
+    
+    onRender: function() {
+        this.callParent(arguments);
+        this.mon(this.el,'click',this.onClick,this);
+    },
+    _generateChecksum: function(string){
+        var chk = 0x12345678,
+            i;
+        string = string.replace(/var CHECKSUM = .*;/,"");
+        string = string.replace(/\s/g,"");  //Remove all whitespace from the string.
+        
+        for (i = 0; i < string.length; i++) {
+            chk += (string.charCodeAt(i) * i);
+        }
+    
+        return chk;
+    },
+    _checkChecksum: function(container) {
+        var me = this;
+        Ext.Ajax.request({
+            url: document.URL,
+            params: {
+                id: 1
+            },
+            success: function (response) {
+                text = response.responseText;
+                if ( CHECKSUM ) {
+                    if ( CHECKSUM !== me._generateChecksum(text) ) {
+                        console.log("Checksums don't match!");
+                        if ( me.dialog ) {
+                            me.dialog.add({xtype:'container',html:'Checksums do not match'});
+                        }
+                    }
+                }
+            }
+        });
+    },
+    onClick: function(e) {
+        var me = this;
+        this._checkChecksum(this);
+        
+        var dialog_items = [];
+        
+        if ( this.informationHtml ) {
+            dialog_items.push({
+                xtype:'container',
+                html: this.informationHtml
+            });
+        }
+                
+        dialog_items.push({
+            xtype:'container',
+            html:"This app was created by the Rally Technical Services Team."
+        });
+        
+        if ( APP_BUILD_DATE ) {
+            dialog_items.push({
+                xtype:'container',
+                html:'Build date/time: ' + APP_BUILD_DATE
+            });
+        }
+        
+        if (this.dialog){this.dialog.destroy();}
+        this.dialog = Ext.create('Rally.ui.dialog.Dialog',{
+            defaults: { padding: 5, margin: 5 },
+            closable: true,
+            draggable: true,
+            title: me.title,
+            items: dialog_items
+        });
+        this.dialog.show();
+    }
+});
+
+/*
+ */
+Ext.define('Rally.technicalservices.Logger',{
+    constructor: function(config){
+        Ext.apply(this,config);
+    },
+    log: function(args){
+        var timestamp = "[ " + Ext.util.Format.date(new Date(), "Y-m-d H:i:s.u") + " ]";
+        //var output_args = arguments;
+        //output_args.unshift( [ "[ " + timestamp + " ]" ] );
+        //output_args = Ext.Array.push(output_args,arguments);
+        
+        var output_args = [];
+        output_args = Ext.Array.push(output_args,[timestamp]);
+        output_args = Ext.Array.push(output_args, Ext.Array.slice(arguments,0));
+
+        window.console && console.log.apply(console,output_args);
+    }
+
+});
+
+Ext.define('Rally.technicalservices.data.Chunker',{
+    MAX_CHUNK_SIZE: 25,
+    logger: new Rally.technicalservices.Logger(),
+    config: {
+        model: null,
+        fetch: null,
+        chunkField: null,
+        chunkOids: null
+    },
+    constructor: function(config){
+        this.initConfig(config);
+    },
+    load: function(){
+        var deferred = Ext.create('Deft.Deferred');
+        var oids = this.chunkOids;
+        var promises = [];
+
+        if (oids.length > this.MAX_CHUNK_SIZE){
+            var start_idx = 0;
+            console.log('original array',oids);
+            while(start_idx < oids.length){
+                chunk_values = oids.splice(start_idx, this.MAX_CHUNK_SIZE);
+                promises.push(this._fetchRecords(chunk_values));
+            }
+        } else {
+            promises.push(this._fetchRecords(oids));
+        }
+
+        if (promises.length == 0){
+            deferred.resolve();
+        }
+        Deft.Promise.all(promises).then({
+            scope: this,
+            success: function(records) {
+                var data = _.flatten(records);
+                deferred.resolve(data);
+            },
+            failure: function(){
+                deferred.resolve([]);
+            }
+        });
+        return deferred;
+    },
+    _fetchRecords: function(object_ids){
+        var deferred = Ext.create('Deft.Deferred');
+        var filters = [];
+        Ext.each(object_ids, function(oid){
+            filters.push({property: this.chunkField, value: oid});
+        },this);
+        var wsFilters = Rally.data.wsapi.Filter.or(filters);
+
+        Ext.create('Rally.data.wsapi.Store',{
+            model: this.model,
+            fetch: this.fetch,
+            autoLoad: true,
+            context: {project: null},
+            filters: wsFilters,
+            listeners: {
+                scope: this,
+                load: function(store, records, success){
+                    this.logger.log('chunking success', success);
+                    deferred.resolve(records);
+                }
+            }
+        });
+        return deferred;
+    }
+});
+Ext.define('Rally.technicalservices.FileUtilities', {
+    singleton: true,
+    logger: new Rally.technicalservices.Logger(),
+
+    saveTextAsFile: function(textToWrite, fileName)
+    {
+        var textFileAsBlob = new Blob([textToWrite], {type:'text/plain'});
+        var fileNameToSaveAs = fileName;
+
+        var downloadLink = document.createElement("a");
+        downloadLink.download = fileNameToSaveAs;
+        downloadLink.innerHTML = "Download File";
+        if (window.webkitURL != null)
+        {
+            // Chrome allows the link to be clicked
+            // without actually adding it to the DOM.
+            downloadLink.href = window.webkitURL.createObjectURL(textFileAsBlob);
+        }
+        else
+        {
+            // Firefox requires the link to be added to the DOM
+            // before it can be clicked.
+            downloadLink.href = window.URL.createObjectURL(textFileAsBlob);
+            downloadLink.onclick = destroyClickedElement;
+            downloadLink.style.display = "none";
+            document.body.appendChild(downloadLink);
+        }
+        downloadLink.click();
+    },
+
+    destroyClickedElement: function(event)
+    {
+        document.body.removeChild(event.target);
+    },
+    CSVtoArray: function(text) {
+        var re_valid = /^\s*(?:'[^'\\]*(?:\\[\S\s][^'\\]*)*'|"[^"\\]*(?:\\[\S\s][^"\\]*)*"|[^,'"\s\\]*(?:\s+[^,'"\s\\]+)*)\s*(?:,\s*(?:'[^'\\]*(?:\\[\S\s][^'\\]*)*'|"[^"\\]*(?:\\[\S\s][^"\\]*)*"|[^,'"\s\\]*(?:\s+[^,'"\s\\]+)*)\s*)*$/;
+        // Return NULL if input string is not well formed CSV string.
+        if (!re_valid.test(text)) return null;
+
+        var a = [];                     // Initialize array to receive values.
+        var rows = text.split(/\r\n?|\n/g);
+        Ext.each(rows, function(row){
+            var split_row = this._splitRow(row);
+            if (split_row.length > 0){
+                a.push(split_row);
+            }
+        },this);
+
+        return a;
+    },
+    _splitRow: function(row){
+        /*
+         * http://stackoverflow.com/questions/8493195/how-can-i-parse-a-csv-string-with-javascript
+         */
+        var re_value = /(?!\s*$)\s*(?:'([^'\\]*(?:\\[\S\s][^'\\]*)*)'|"([^"\\]*(?:\\[\S\s][^"\\]*)*)"|([^,'"\s\\]*(?:\s+[^,'"\s\\]+)*))\s*(?:,|$)/g;
+        var a = [];
+        row.replace(re_value, // "Walk" the string using replace with callback.
+            function(m0, m1, m2, m3) {
+                console.log('split',row,m0,m1,m2,m3)
+                // Remove backslash from \' in single quoted values.
+                if      (m1 !== undefined) a.push(m1.replace(/\\'/g, "'"));
+                // Remove backslash from \" in double quoted values.
+                else if (m2 !== undefined) a.push(m2.replace(/\\"/g, '"'));
+                else if (m3 !== undefined) a.push(m3);
+                return ''; // Return empty string.
+            });
+        // Handle special case of empty last value.
+        if (/,\s*$/.test(row)) a.push('');
+        return a;
+    },
+    CSVtoDataHash: function(text){
+        var rows = Rally.technicalservices.FileUtilities.CSVtoArray(text);
+        var data = [];
+        if (rows){
+            var keys = rows[0];
+            for (var i=1; i< rows.length; i++){
+                var data_row = {};
+                for (var j=0; j<keys.length; j++){
+                    data_row[keys[j]]=rows[i][j];
+                }
+                data.push(data_row);
+            }
+        }
+        return data;
+    }
+});
+
+Ext.override(Rally.ui.combobox.FieldComboBox, {
+    _isNotHidden: function(field) {
+        var allowedAttributeTypes = ['STRING','BOOLEAN','DATE','DECIMAL','INTEGER','QUANTITY','TEXT'];
+        console.log('_isNotHidden', field, field.attributeDefinition);
+        if (field.attributeDefinition){
+           if (field.name == 'FormattedID'){
+               return true;
+           }
+            if (!Ext.Array.contains(allowedAttributeTypes, field.attributeDefinition.AttributeType)){
+             return false;
+           }
+           if (field.attributeDefinition.Hidden){
+               return false;
+           }
+           if (field.attributeDefinition.ReadOnly){
+               return false;
+           }
+            return true;
+        }
+        return false;
+        //return !field.hidden;
+    }
+});
+Ext.override(Rally.data.custom.Store,{
+    findRecord: function(fieldName, fieldValue) {
+        Ext.each(this.data.items, function(item){
+            if (item.get(fieldName) == fieldValue){
+                foundItem = item;
+            }
+        });
+        console.log('find',arguments,this.data);
+        var me = this,
+            index = me.find.apply(me, arguments);
+        console.log(index);
+        return index !== -1 ? me.getAt(index) : null;
+    }
+});
+Ext.define("PortfolioItemCSVBulkUpdate", {
+    extend: 'Rally.app.App',
+    componentCls: 'app',
+    logger: new Rally.technicalservices.Logger(),
+    items: [
+        {xtype:'container',itemId:'selection_box',layout: {type: 'hbox'}, padding:10},
+        {xtype:'container',itemId:'display_box'},
+        {xtype:'container',itemId:'grid_box'},
+        {xtype:'tsinfolink'}
+    ],
+    launch: function() {
+        this.down('#selection_box').add({
+            xtype: 'rallyportfolioitemtypecombobox',
+            itemId: 'type-combo',
+            fieldLabel: 'PortfolioItem Type',
+            labelWidth: 100,
+            labelAlign: 'right',
+            margin: 10
+        });
+
+        this.down('#selection_box').add({
+            xtype: 'filefield',
+            fieldLabel: 'Import File',
+            itemId: 'file-import',
+            labelWidth: 100,
+            labelAlign: 'right',
+            msgTarget: 'side',
+            allowBlank: false,
+            margin: 10,
+            buttonText: 'Import...',
+            buttonConfig: {
+                cls: 'primary rly-small'
+            },
+            listeners: {
+                scope: this,
+                change: this._uploadFile
+            }
+        });
+
+        this.down('#selection_box').add({
+            xtype: 'rallybutton',
+            itemId: 'btn-save',
+            text: 'Save Updates',
+            scope: this,
+            margin: '10 10 10 100',
+            handler: this._saveUpdates
+        });
+
+
+        this.down('#selection_box').add({
+            xtype: 'container',
+            itemId: 'error_box',
+            padding: 25,
+            flex: 1,
+            tpl: '<tpl for="."><font color="red">Error: {Msg}</error><br></tpl>'
+        });
+
+    },
+    _uploadFile: function(fld, val){
+        this.down('#error_box').update('');
+        if (val.length == 0){
+            return;
+        }
+        var newValue = val.replace(/C:\\fakepath\\/g, '');
+        fld.setRawValue(newValue);
+
+        var upload_file = document.getElementById(fld.fileInputEl.id).files[0].slice();
+        var me = this;
+        var reader = new FileReader();
+        reader.addEventListener("loadend", function() {
+            // reader.result contains the contents of blob as a typed array
+            me._startImport(reader.result);
+        });
+        this.setLoading('Reading File...');
+        reader.readAsText(upload_file);
+
+    },
+    _getDefaultMapping: function(field){
+        /**
+         * This looks for a default field in 1 of 3 places:
+         * 1 - Looks for existing settings
+         * 2 - Looks to see if the field name matches an existing field name
+         * 3 - Looks to see if the field name matches an existing field display name
+         */
+        var mapping = null;
+
+        if (field == 'Rally ID'){
+            return 'FormattedID';
+        }
+
+        return mapping;
+    },
+    _buildFieldMappers: function(headers, model){
+
+        Ext.each(headers, function(field) {
+            console.log('mappedfield',field);
+            var cb = this.down('#pnl-mapping').add({
+                xtype: 'rallyfieldcombobox',
+                fieldLabel: field,
+                labelWidth: 300,
+                labelAlign: 'right',
+                model: model,
+                allowNoEntry: true,
+                noEntryText: '-- None --',
+                emptyText: '-- None --'
+            });
+            var mappedField = this._getDefaultMapping(field);
+            cb.on('ready', function (cb) {
+                cb.setValue(mappedField);
+            }, this, {single: true});
+        },this);
+    },
+    _getImportedData: function(textData){
+        this.logger.log('_getImportedData',textData);
+        //Validate FormattedID field exists
+        //Vaidate other fields, values and correct format
+        var data = Rally.technicalservices.FileUtilities.CSVtoDataHash(textData);
+        return data;
+    },
+    _startImport: function(file_contents){
+        this.logger.log('_startImport', file_contents);
+
+        this.artifactType = this.down('#type-combo').getRecord().get('TypePath');
+        this.csvData = this._getImportedData(file_contents);
+
+        if (this.csvData && this.csvData.length > 0){
+             if (!this.down('tabpanel')){
+                this.down('#display_box').add({
+                    xtype: 'tabpanel',
+                    activeTab: 0,
+                    itemId: 'pnl-display',
+                    items: [{
+                        title: 'Fields',
+                        layout: {type: 'hbox'},
+                        items: [{
+                            layout: {type: 'vbox'},
+                            itemId: 'pnl-mapping'
+                        },{
+                            xtype: 'rallybutton',
+                            text: 'Refresh Data',
+                            scope: this,
+                            handler: this._refreshGrid
+                        }]
+                    }, {
+                        title: 'Data',
+                        itemId: 'pnl-grid'
+                        //layout: {type: 'vbox'}
+                    },{
+                        title: 'Log',
+                        itemId: 'pnl-log'
+                    }]
+                });
+            }
+            this.down('#display_box').update('');
+            this.down('#pnl-log').html = Rally.util.DateTime.formatWithDefaultDateTime(new Date) + '<br/>';
+
+            this._buildFieldMappers(Object.keys(this.csvData[0]),this.artifactType);
+
+
+        } else {
+            this.down('#display_box').update('File loaded is not a valid CSV file.');
+        }
+        this.setLoading(false);
+
+    },
+    _getMappedFields: function(){
+        var mappedCbs = this.down('#pnl-mapping').query('rallyfieldcombobox');
+        this.logger.log('_getMappedFields',mappedCbs);
+        var mapping = {};
+        Ext.each(mappedCbs, function(cb){
+            if (cb.getValue()){
+                mapping[cb.fieldLabel] = cb.getValue();
+            }
+        });
+        this.logger.log('_getMappedFields field maps:', mapping);
+        return mapping;
+    },
+    _getKeyForValue: function(valueToFind, hash){
+        var foundKey = null;
+        Ext.Object.each(hash, function(key,value){
+            if (value == valueToFind){
+                foundKey = key;
+                return false;
+            }
+        });
+        return foundKey;
+    },
+    _buildWsapiRecordHash: function(records){
+        var hash = {};
+        Ext.each(records, function(r){
+            hash[r.get('FormattedID')] = r;
+        });
+        return hash;
+    },
+    _refreshGrid: function(){
+
+        var data = this.csvData;
+
+        //Validate the mappings...
+        // 1 - Is there a field mapped to FormattedID?
+        this.logger.log('_refreshGrid', this.csvData);
+
+        var mappedFields = this._getMappedFields();
+        var formattedIDKey = this._getKeyForValue('FormattedID', mappedFields);
+
+        var fids = [];
+        Ext.each(data, function(d){
+            fids.push(d[formattedIDKey]);
+        });
+
+        var fetchFields = _.values(mappedFields);
+        this.setLoading(true);
+        this._fetchItems(this.artifactType,fids, fetchFields).then({
+            scope: this,
+            success: function(store){
+
+                //update store with values to be saved
+                this.wsapiRecords = this._buildWsapiRecordHash(store);
+
+                var custom_data = this._updateValues(store,this.csvData,mappedFields);
+                if (this.down('#update-grid')){
+                    this.down('#update-grid').destroy();
+                 //   this.down('#btn-save').destroy();
+                }
+
+                this.down('#pnl-grid').add({
+                    xtype: 'rallygrid',
+                    itemId: 'update-grid',
+                    store: Ext.create('Rally.data.custom.Store',{
+                        data: custom_data,
+                        pageSize: custom_data.length
+                    }),
+                    showRowActionsColumn: false,
+                    showPagingToolbar: false,
+                    columnCfgs: this._getColumnCfgs(fetchFields,this.down('#type-combo').getRecord())
+                });
+                this.setLoading(false);
+                 this.down('tabpanel').setActiveTab(1);
+
+            },
+            failure: function(error){
+                this.setLoading(false);
+                this.down('tabpanel').setActiveTab(2);
+            }
+        });
+    },
+    _findRecord: function(records, field, value){
+        for (var i=0; i < records.length; i++){
+            if (records[i].get(field) == value){
+                return records[i];
+            }
+        }
+        return null;
+    },
+    _updateValues: function(records, imported_data, mappedFields){
+        this.logger.log('_updateValues');
+        var errors = [];
+        var custom_data = [];
+        var fidKey = this._getKeyForValue('FormattedID',mappedFields);
+        Ext.each(imported_data, function(d){
+            var fid = d[fidKey];
+            var rec = this._findRecord(records, 'FormattedID', fid);  //store.findRecord('FormattedID',fid);
+            if (rec == null){
+                errors.push({'FormattedID': d.FormattedId, 'Msg':Ext.String.format("FormattedID {0} does not exist.",d[fidKey])});
+                this.logError({'FormattedID': d.FormattedId, 'Msg':Ext.String.format("FormattedID {0} does not exist.",d[fidKey])});
+            }
+            var custom_rec = {FormattedID: fid, Status: 'NOCHANGE'};
+            Ext.each(Object.keys(d),function(key){
+                var fieldKey = mappedFields[key];
+                if (rec) {
+                    if (fieldKey && fieldKey != 'FormattedID'){
+                        var val = d[key];
+                        if (val && !isNaN(val)){
+                            val = Number(val);
+                        }
+                        if (val != rec.get(fieldKey)){
+                            custom_rec.Status = 'CHANGE';
+                            this.logInfo({'FormattedID': d.FormattedId, 'Msg':Ext.String.format("Updates needed for FormattedID {0} {1} from {2} to {3}.",d[fidKey],fieldKey,rec.get(fieldKey),val)});
+                            rec.set(fieldKey,val);
+                        } else {
+                            this.logInfo({'FormattedID': d.FormattedId, 'Msg':Ext.String.format("No updates needed for FormattedID {0} {1} field.",d[fidKey],fieldKey)});
+                        }
+                        custom_rec[fieldKey] = val;
+                    }
+                 }
+            },this);
+            if (rec){
+                custom_data.push(custom_rec);
+            }
+        },this);
+
+        return custom_data;
+    },
+    logError: function(obj){
+        //this.down('#pnl-log').body.insertHtml("beforeEnd", '<span class="ERROR">' + obj.Msg + '</span><br/>');
+        this.down('#pnl-log').html += '<span class="ERROR">' + obj.Msg + '</span><br/>';
+    },
+    logInfo: function(obj){
+        this.down('#pnl-log').html += '<span class="INFO">' + obj.Msg + '</span><br/>';
+    },
+
+    _getColumnCfgs: function(fields,model){
+        var gcolcfgs = [];
+        gcolcfgs.push({
+            text: 'Status',
+            xtype: 'templatecolumn',
+            tpl: '<tpl switch="Status"><tpl case="ERROR">' +
+            '<font color="red">Error</font><tpl case="SAVED"><font color="green">Saved</font>' +
+            '<tpl case="NOCHANGE"><font color="gray">Unchanged</font></tpl>'
+        });
+        Ext.each(fields, function(f){
+            var colcfgs = {};
+            colcfgs['dataIndex'] = f;
+            colcfgs['text'] = f;
+            if (f != 'FormattedID'){
+                colcfgs['flex'] = 1;
+            }
+            gcolcfgs.push(colcfgs);
+        });
+        return gcolcfgs;
+    },
+    _updateSavedStatus: function(item, rec,operation,success){
+        this.logger.log('_updateSavedStatus',rec,operation,success);
+
+        if (success) {
+            item.set('Status','SAVED');
+            item.save();
+          //  rec.set('Status','SAVED');
+            this.logInfo({'FormattedID': rec.get('FormattedID'), 'Msg':rec.get('FormattedID') + ' updated successfully.'});
+
+        } else {
+            item.set('Status','ERROR');
+            item.save();
+           // rec.set('Status','ERROR');
+
+            var error = Ext.String.format('Error updating {0}: {1}',rec.get('FormattedID'),operation.error.errors[0]);
+            this.logError({'FormattedID': item.get('FormattedID'), 'Msg':error});
+            Rally.ui.notify.Notifier.showError({message: error});
+        }
+    },
+    _saveUpdates: function(){
+        this.logger.log('_saveUpdates');
+        var store = this.down('#update-grid').getStore();
+        this.setLoading("Saving data...");
+        var bChange = false;
+        Ext.each(store.data.items, function(item){
+            console.log('storeitem', item.get('Status'))
+            if (item.get('Status') == 'CHANGE'){
+                var bChange = true;
+                var rec = this.wsapiRecords[item.get('FormattedID')];
+
+                rec.save({
+                    scope: this,
+                    callback: function(rec, operation, success) {
+                        this.setLoading(false);
+                        this._updateSavedStatus(item, rec,operation,success);
+
+                    }
+                });
+
+            }
+        }, this);
+        if (!bChange){
+            this.setLoading(false);
+        }
+    },
+    _fetchItems: function(type,formatted_ids, fetch_fields){
+        this.logger.log('_fetchItems', type, formatted_ids, fetch_fields);
+        var deferred = Ext.create('Deft.Deferred');
+
+        var chunker = Ext.create('Rally.technicalservices.data.Chunker',{
+            chunkOids: formatted_ids,
+            chunkField: 'FormattedID',
+            fetch: fetch_fields,
+            model: this.artifactType
+        });
+        chunker.load().then({
+            scope: this,
+            success: function(records){
+                this.logger.log('chunker success', records);
+                deferred.resolve(records);
+            },
+            failure: function(){
+                alert('failed');
+                deferred.reject('failed');
+            }
+        });
+
+        return deferred;
+    }
+});
+            
+               Rally.launchApp('PortfolioItemCSVBulkUpdate', {
+                   name: 'Portfolio Item Bulk Update from CSV'
+               });
+        });
+    </script>
+    
+    <style type="text/css">
+
+.app {
+}
+.tsinfolink {
+    position:absolute;
+    right:0px;
+    width: 14px;
+    height: 14px;
+    border-radius: 7px;
+    text-align: center;
+    color: white;
+    background: #C0C0C0;
+    border-style: solid;
+    border-width: 1px;
+    margin-top: 25px;
+    margin-right: 5px;
+    cursor: pointer;
+}
+
+.ERROR {
+    color: red;
+    font-family: NotoSans, Helvetica, Arial;
+}
+.SAVED {
+    color: green;
+    font-family: NotoSans, Helvetica, Arial;
+}
+.INFO {
+    color: black;
+    font-family: NotoSans, Helvetica, Arial;
+}
+.x-form-file-input {
+    border: 0;
+    position: absolute;
+    cursor: pointer;
+    top: -2px;
+    right: -2px;
+    filter: alpha(opacity=0);
+    opacity: 0;
+    font-size: 15px;
+}
+    </style>
+
+</head>
+<body></body>
+</html>

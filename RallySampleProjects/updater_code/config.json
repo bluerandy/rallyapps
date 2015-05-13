@@ -1,0 +1,17 @@
+{
+   "name": "Updater Code",
+   "className": "Rally.apps.releasetracking.UpdaterCode",
+   "server": "https://rally1.rallydev.com",
+   "sdk": "2.0rc3",
+   "javascript": [
+      "ts-info-link.js",
+      "ts-logger.js",
+      "ts-chunker.js",
+      "ts-file-utilities.js",
+      "ts-overrides.js",
+      "app.js"
+   ],
+   "css": [
+      "app.css"
+   ]
+}

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Portfolio Items Tree Grid</title>
+
+
+<!--[if IE]>
+<script type="text/javascript" src="//rally1.rallydev.com/apps/2.0rc3/sdk.js?debug=true"></script>
+<![endif]-->
+<![if !IE]>
+<script type="text/javascript" src="/apps/2.0rc3/sdk.js?debug=true"></script>
+<![endif]>
+
+<script type="text/javascript">
+        Rally.loadScripts(
+                [
+                      "../common/PortfolioItemsGridBoardApp.js",
+                      "PortfolioItemsTreeGridApp.js",
+                ],
+        function() {
+            Rally.launchApp('Rally.apps.portfolioitemstreegrid.PortfolioItemsTreeGridApp', {
+                name:"Portfolio Items Tree Grid"
+            });
+        }, true);
+    </script>
+
+
+<link rel="stylesheet" type="text/css"
+	href="PortfolioItemsTreeGridApp.less.css" />
+</head>
+<body>
+</body>
+</html>

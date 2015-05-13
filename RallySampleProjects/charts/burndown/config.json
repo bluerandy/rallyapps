@@ -1,0 +1,23 @@
+{
+   "name": "Release Burndown",
+   "className": "Rally.apps.charts.burndown.ReleaseBurnDownApp",
+   "server": "https://rallyonprem.sys.cigna.com",
+   "sdk": "2.0rc3",
+   "javascript": [
+      "../DateMixin.js",
+      "../IntegrationHeaders.js",
+      "../settings/RadioGroupSetting.js",
+      "../settings/ChartDisplayTypePicker.js",
+      "../settings/SettingsChangeMixin.js",
+      "../settings/DataTypePicker.js",
+      "../settings/TimeboxPicker.js",
+      "BurnDownSettings.js",
+      "BurnDownChart.js",
+      "BurnDownApp.js",
+      "BurnDownCalculator.js",
+      "ReleaseBurnDownApp.js"
+   ],
+   "css": [
+      "../Charts.less"
+   ]
+}

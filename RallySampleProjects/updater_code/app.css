@@ -1,0 +1,45 @@
+.app {
+	
+}
+
+.tsinfolink {
+	position: absolute;
+	right: 0px;
+	width: 14px;
+	height: 14px;
+	border-radius: 7px;
+	text-align: center;
+	color: white;
+	background: #C0C0C0;
+	border-style: solid;
+	border-width: 1px;
+	margin-top: 25px;
+	margin-right: 5px;
+	cursor: pointer;
+}
+
+.ERROR {
+	color: red;
+	font-family: NotoSans, Helvetica, Arial;
+}
+
+.SAVED {
+	color: green;
+	font-family: NotoSans, Helvetica, Arial;
+}
+
+.INFO {
+	color: black;
+	font-family: NotoSans, Helvetica, Arial;
+}
+
+.x-form-file-input {
+	border: 0;
+	position: absolute;
+	cursor: pointer;
+	top: -2px;
+	right: -2px;
+	filter: alpha(opacity = 0);
+	opacity: 0;
+	font-size: 15px;
+}

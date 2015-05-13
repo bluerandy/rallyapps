@@ -1,0 +1,13 @@
+{
+   "name": "Custom Grid",
+   "className": "Rally.apps.grid.GridApp",
+   "server": "//rally1.rallydev.com",
+   "sdk": "2.0rc3",
+   "javascript": [
+      "GridApp.js"
+   ],
+   "css": [],
+   "parents": [
+      "RallyCommunity/paginated-custom-grid"
+   ]
+}

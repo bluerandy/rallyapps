@@ -1,0 +1,12 @@
+{
+   "name": "Recent Activity",
+   "className": "Rally.apps.recentactivity.RecentActivityApp",
+   "server": "https://rally1.rallydev.com",
+   "sdk": "2.0",
+   "javascript": [
+      "RecentActivityApp.js"
+   ],
+   "css": [
+      "RecentActivityApp.css"
+   ]
+}
