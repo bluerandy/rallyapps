@@ -1,0 +1,19 @@
+{
+   "name": "Visibility Dashboard",
+   "className": "Rally.apps.portfoliodrilldown.VisibilityDashboardApp",
+   "server": "https://rally1.rallydev.com",
+   "sdk": "2.0rc3",
+   "javascript": [
+      "src/FormattedIDRendererOverride.js",
+      "src/plugin/PortfolioTypeChooser.js",
+      "src/TreeStore.js",
+      "src/TreeStoreBuilder.js",
+      "src/VisibilityDashboardApp.js"
+   ],
+   "css": [
+      "app.css"
+   ],
+   "parents": [
+      "RallyCommunity/PortfolioDrilldownApp"
+   ]
+}

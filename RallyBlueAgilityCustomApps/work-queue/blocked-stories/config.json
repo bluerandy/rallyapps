@@ -1,0 +1,16 @@
+{
+   "name": "Blocked Stories",
+   "className": "BlockedStories",
+   "server": "https://rally1.rallydev.com",
+   "sdk": "2.0rc3",
+   "javascript": [
+      "BlockedStories.js",
+      "Exporter.js"
+   ],
+   "css": [
+      "app.css"
+   ],
+   "parents": [
+      "sficarrotta/Multi-item-grid"
+   ]
+}

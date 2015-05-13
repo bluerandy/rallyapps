@@ -1,0 +1,16 @@
+{
+   "name": "My Work Queue",
+   "className": "MyWorkQueue",
+   "server": "https://rallyonprem.sys.cigna.com",
+   "sdk": "2.0rc3",
+   "javascript": [
+      "MyWorkQueue.js",
+      "Exporter.js"
+   ],
+   "css": [
+      "app.css"
+   ],
+   "parents": [
+      "sficarrotta/Multi-item-grid"
+   ]
+}

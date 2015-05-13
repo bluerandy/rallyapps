@@ -1,0 +1,19 @@
+{
+   "name": "Success Dashboard",
+   "className": "Rally.apps.portfoliodrilldown.SuccessDashboardApp",
+   "server": "https://rallyonprem.sys.cigna.com",
+   "sdk": "2.0rc3",
+   "javascript": [
+      "src/FormattedIDRendererOverride.js",
+      "src/plugin/PortfolioTypeChooser.js",
+      "src/TreeStore.js",
+      "src/TreeStoreBuilder.js",
+      "src/SuccessDashboardApp.js"
+   ],
+   "css": [
+      "app.css"
+   ],
+   "parents": [
+      "RallyCommunity/PortfolioDrilldownApp"
+   ]
+}

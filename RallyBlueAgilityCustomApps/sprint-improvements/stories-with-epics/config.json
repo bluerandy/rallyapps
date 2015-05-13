@@ -1,0 +1,15 @@
+{
+   "name": "stories-with-epics",
+   "className": "stories-with-epics",
+   "server": "https://rally1.rallydev.com",
+   "sdk": "2.0rc3",
+   "javascript": [
+      "stories-with-epics.js"
+   ],
+   "css": [
+      "app.css"
+   ],
+   "parents": [
+      "sficarrotta/Multi-item-grid"
+   ]
+}

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>wip-limits</title>
+
+    <script type="text/javascript" src="/apps/2.0rc3/sdk.js"></script>
+
+    <script type="text/javascript">
+        Rally.onReady(function () {
+                Ext.define("wip-limits",{extend:"Rally.app.App",mixins:["Rally.Messageable"],launch:function(){this.subscribe(this,"timeboxReleaseChanged",this._releaseChanged,this),this.subscribe(this,"timeboxIterationChanged",this._iterationChanged,this),this._updateBoard()},_updateBoard:function(portfolioTimeboxFilter,storyTimeboxFilter){var me=this,model=Rally.data.ModelFactory.getModel({type:"UserStory",scope:this}),store=Ext.create("Rally.data.wsapi.Store",{model:"hierarchicalrequirement",fetch:["Name","FormattedID","Project","ScheduleState"],limit:1/0});store.on("load",this._onStoriesLoaded,this),store.load()},_onStoriesLoaded:function(store,stories){var wip_test=[],tmp={};tmp.project="IA-Program > IA Project Governance & Leadership",tmp["In-Progress"]=10,tmp.Completed=5,wip_test.push(tmp);var g=_.groupBy(stories,function(t){return t.get("Project")?t.get("Project")._refObjectName:"none"}),summaries=_.map(_.keys(g),function(key){var stories=g[key],counts=_.countBy(stories,function(story){return story.get("ScheduleState")}),values={};return _.each(["Backlog","Defined","In-Progress","Completed","Accepted"],function(state){values[state]=_.isUndefined(counts[state])?0:counts[state]}),_.each(wip_test,function(wip){wip.project==key?(values["in-progress-wip"]=wip["In-Progress"],values["completed-wip"]=wip.Completed,values["defined-wip"]=0):(values["in-progress-wip"]=0,values["completed-wip"]=0,values["defined-wip"]=0)}),values.project=key,values});console.log("Summaries: ",summaries);var newStore=Ext.create("Rally.data.custom.Store",{data:summaries,listeners:{update:function(store,record,op,fieldNames,eOpts){console.log("rec:",op,record,fieldNames)}}});this._displayGrid(newStore)},_displayGrid:function(store){this.add({xtype:"rallygrid",itemId:"workqueue",enablebulkeditable:!0,enableEditing:!0,store:store,columnCfgs:[{text:"Project",dataIndex:"project"},{text:"Backlog",dataIndex:"Backlog"},{text:"Defined",dataIndex:"Defined"},{text:"Defined Limit",dataIndex:"defined-wip",editor:{xtype:"textfield"}},{text:"In-Progress",dataIndex:"In-Progress"},{text:"In-Progress Limit",dataIndex:"in-progress-wip"},{text:"Completed",dataIndex:"Completed"},{text:"Completed Limit",dataIndex:"completed-wip"},{text:"Accepted",dataIndex:"Accepted"}]})},_releaseChanged:function(release){var releaseStartFilter=Ext.create("Rally.data.wsapi.Filter",{property:"PlannedEndDate",operator:">=",value:Rally.util.DateTime.toIsoString(release.get("ReleaseStartDate"))}),releaseEndFilter=Ext.create("Rally.data.wsapi.Filter",{property:"PlannedEndDate",operator:"<=",value:Rally.util.DateTime.toIsoString(release.get("ReleaseDate"))}),portfolioTimeboxFilter=releaseEndFilter.and(releaseStartFilter),storyFilter=Ext.create("Rally.data.wsapi.Filter",{property:"Release.Name",value:release.get("Name")});this.getContext().setTimeboxScope(release,"release"),this._updateBoard(portfolioTimeboxFilter,storyFilter)},_iterationChanged:function(iteration){var iterationStartFilter=Ext.create("Rally.data.wsapi.Filter",{property:"PlannedEndDate",operator:">=",value:Rally.util.DateTime.toIsoString(iteration.get("StartDate"))}),iterationEndFilter=Ext.create("Rally.data.wsapi.Filter",{property:"PlannedEndDate",operator:"<=",value:Rally.util.DateTime.toIsoString(iteration.get("EndDate"))}),portfolioTimeboxFilter=iterationStartFilter.and(iterationEndFilter),storyFilter=Ext.create("Rally.data.wsapi.Filter",{property:"Iteration.Name",value:iteration.get("Name")});this.getContext().setTimeboxScope(iteration,"iteration"),this._updateBoard(portfolioTimeboxFilter,storyFilter)},setWipLimit:function(project,limit){console.log("Setting wip limit of "+limit+" for project: "+project),Rally.data.PreferenceManager.update({workspace:this.getContext().getWorkspace(),settings:settings,scope:this,success:function(updatedRecords,notUpdatedRecord,options){me.console.log("success",me.getContext().getWorkspace(),updatedRecords,notUpdatedRecord,options),notUpdatedRecord.length>0?(me.console.log("PreferenceManager update did not work;  Saving preferences directly."),me._savePrefs(key,settings[key]).then({failure:function(){Rally.ui.notify.Notifier.showWarning({message:"Options not saved to Preferences."})}})):Rally.ui.notify.Notifier.show({message:"Options Saved to Preferences."})}})},getWipLimit:function(project){console.log("Getting wip limit for project: "+project),Rally.data.PreferenceManager.load({workspace:this.getContext().getWorkspace(),filterByName:key,success:function(prefs){if(this.console.log("prefs",prefs),prefs&&prefs[key]){var values=Ext.JSON.decode(prefs[key]);console.console.log(values),me.down("#field_values").setValue(values.join("\r\n"))}}})},getWipLimits:function(){console.log("Getting all wip limits"),Rally.data.PreferenceManager.load({workspace:this.getContext().getWorkspace(),filterByName:key,success:function(prefs){if(this.console.log("prefs",prefs),prefs&&prefs[key]){var values=Ext.JSON.decode(prefs[key]);console.console.log(values),me.down("#field_values").setValue(values.join("\r\n"))}}})}});
+
+            Rally.launchApp('wip-limits', {
+                name:"wip-limits",
+	            parentRepos:""
+            });
+
+        });
+    </script>
+
+
+    <style type="text/css">
+        
+    </style>
+</head>
+<body>
+</body>
+</html>

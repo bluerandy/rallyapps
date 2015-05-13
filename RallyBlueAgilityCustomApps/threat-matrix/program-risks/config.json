@@ -1,0 +1,16 @@
+{
+   "name": "Program Risks",
+   "className": "ProgramRisks",
+   "server": "https://rally1.rallydev.com",
+   "sdk": "2.0rc3",
+   "javascript": [
+      "ProgramRisks.js",
+      "Exporter.js"
+   ],
+   "css": [
+      "app.css"
+   ],
+   "parents": [
+      "sficarrotta/Multi-item-grid"
+   ]
+}

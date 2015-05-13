@@ -1,0 +1,16 @@
+{
+   "name": "Team Stories",
+   "className": "TeamStories",
+   "server": "https://rally1.rallydev.com",
+   "sdk": "2.0rc3",
+   "javascript": [
+      "TeamStories.js",
+      "Exporter.js"
+   ],
+   "css": [
+      "app.css"
+   ],
+   "parents": [
+      "sficarrotta/Multi-item-grid"
+   ]
+}

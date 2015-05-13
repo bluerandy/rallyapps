@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Blocked Items</title>
+
+
+    <script type="text/javascript" src="https://rallyonprem.sys.cigna.com/apps/2.0rc3/sdk-debug.js"></script>
+
+    <script type="text/javascript">
+        Rally.loadScripts(
+                [
+                      "BlockedItems.js",
+                      "Exporter.js",
+                ],
+        function() {
+            Rally.launchApp('BlockedItems', {
+                name:"Blocked Items"
+            });
+        }, true);
+    </script>
+
+
+    <link rel="stylesheet" type="text/css" href="app.css"/>
+</head>
+<body>
+</body>
+</html>

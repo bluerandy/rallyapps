@@ -1,0 +1,33 @@
+{
+   "name": "Visualization Board",
+   "className": "Rally.apps.releasetracking.VisualizationBannerApp",
+   "server": "https://rallyonprem.sys.cigna.com",
+   "sdk": "2.0rc3",
+   "javascript": [
+      "../../timebox-selector/timebox-selector.js",
+      "src/statsbanner/BannerWidget.js",
+      "src/statsbanner/Gauge.js",
+      "src/statsbanner/PlannedVelocity.js",
+      "src/statsbanner/TimeboxEnd.js",
+      "src/statsbanner/LateStories.js",
+      "src/statsbanner/AcceptedPoint.js",
+      "src/statsbanner/AcceptedCount.js",
+      "src/statsbanner/EstimatedStories.js",
+      "src/statsbanner/releaseprogresscharts/ReleaseProgressMixin.js",
+      "src/statsbanner/releaseprogresscharts/ReleaseProgressChart.js",
+      "src/statsbanner/releaseprogresscharts/PieChart.js",
+      "src/statsbanner/releaseprogresscharts/MinimalPieChart.js",
+      "src/statsbanner/ReleaseProgressDialogChartToggle.js",
+      "src/statsbanner/ReleaseProgressDialog.js",
+      "src/statsbanner/ReleaseProgress.js",
+      "src/statsbanner/CollapseExpand.js",
+      "src/StatsBanner.js",
+      "src/VisualizationBannerApp.js"
+   ],
+   "css": [
+      "src/StatsBanner.less"
+   ],
+   "parents": [
+      "RallyCommunity/PSITrackingApp"
+   ]
+}

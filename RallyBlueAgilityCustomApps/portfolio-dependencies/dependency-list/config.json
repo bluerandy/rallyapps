@@ -1,0 +1,16 @@
+{
+   "name": "Portfolio Item Dependencies",
+   "className": "DependencyList",
+   "server": "https://rallyonprem.sys.cigna.com",
+   "sdk": "2.0rc3",
+   "javascript": [
+      "DependencyList.js",
+      "Exporter.js"
+   ],
+   "css": [
+      "app.css"
+   ],
+   "parents": [
+      "sficarrotta/Multi-item-grid"
+   ]
+}

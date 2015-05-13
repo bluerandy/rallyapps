@@ -1,0 +1,12 @@
+{
+   "name": "wip-limits",
+   "className": "wip-limits",
+   "server": "https://rallyonprem.sys.cigna.com",
+   "sdk": "2.0rc3",
+   "javascript": [
+      "wip-limits.js"
+   ],
+   "css": [
+      "app.css"
+   ]
+}
