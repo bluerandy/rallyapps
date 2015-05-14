@@ -64,23 +64,14 @@ Ext.define('wip-limits', {
                 return values;
             }, this);
             console.log("Summaries: ", summaries);
-            var newStore = Rally.data.custom.Store.create({
-                    data : summaries,
-                    context : this.getContext(),
-                    listeners : {
-                        update : function(store, record, op, fieldNames, eOpts)
-                        {
-                            if (op == 'edit')
-                            {
-                                console.log("rec:", op, record, fieldNames);
-                                var project = record.get('project');
-                                var fieldName = _.first(fieldNames);
-                                var value = record.get(fieldName);
-                                console.log("Writing project: " + project + "  field: " + fieldName + "  value: " + value);
-                                me._setWipLimit(project, fieldName, value);
-                            }
-                        }
-                    }
+            var newStore = Ext.create('Rally.data.custom.Store', {
+                data : summaries
+            });
+            newStore.addListener('update', function(store, record, op, fieldNames, eOpts)
+            {
+                console.log("update", op, record, fieldNames)
+            }, store, {
+                single : true
             });
             this._displayGrid(newStore);
         },
@@ -98,6 +89,7 @@ Ext.define('wip-limits', {
                                     {
                                             text : 'Project',
                                             dataIndex : 'project',
+                                            width : 200,
                                             align : 'center'
                                     },
                                     {
@@ -147,7 +139,6 @@ Ext.define('wip-limits', {
         },
         renderLimit : function(value, meta, record, row, col, store, gridView)
         {
-            console.log("Row: " + row + "  col: " + col, "Value: " + value, "Record: ", record);
             var field = null;
             switch (col) {
                 case 2:
@@ -160,10 +151,8 @@ Ext.define('wip-limits', {
                     field = "CompletedWIP";
                     break;
             }
-            console.log("Value: " + value + "  limit: " + record.get(field));
             if (value > record.get(field))
             {
-                console.log("setting meta: ", meta);
                 meta.tdCls = 'over-limit';
             }
             return value;
