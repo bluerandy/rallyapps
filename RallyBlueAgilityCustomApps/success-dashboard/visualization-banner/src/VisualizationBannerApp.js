@@ -26,7 +26,7 @@ Ext.define('Rally.apps.releasetracking.VisualizationBannerApp', {
             var app = this;
             console.log("creating timebox");
             this._timeboxSelector = this.add({
-                    xtype : 'rally.app.timebox-selector',
+                    xtype : 'timebox-selector',
                     context : this.getContext()
             });
         },

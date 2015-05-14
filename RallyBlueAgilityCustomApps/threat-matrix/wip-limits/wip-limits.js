@@ -63,13 +63,24 @@ Ext.define('wip-limits', {
                 values.project = this.currentProject;
                 return values;
             }, this);
-            console.log("Summaries: ", summaries);
             var newStore = Ext.create('Rally.data.custom.Store', {
-                data : summaries
+                    data : summaries,
+                    sorters : {
+                            property : 'project',
+                            direction : 'ASC'
+                    }
             });
             newStore.addListener('update', function(store, record, op, fieldNames, eOpts)
             {
-                console.log("update", op, record, fieldNames)
+                if (op == 'edit')
+                {
+                    console.log("rec:", op, record, fieldNames);
+                    var project = record.get('project');
+                    var fieldName = _.first(fieldNames);
+                    var value = record.get(fieldName);
+                    console.log("Writing project: " + project + "  field: " + fieldName + "  value: " + value);
+                    me._setWipLimit(project, fieldName, value);
+                }
             }, store, {
                 single : true
             });
@@ -89,7 +100,7 @@ Ext.define('wip-limits', {
                                     {
                                             text : 'Project',
                                             dataIndex : 'project',
-                                            width : 200,
+                                            width : 250,
                                             align : 'center'
                                     },
                                     {
@@ -168,10 +179,14 @@ Ext.define('wip-limits', {
                     settings : settings,
                     scope : this
             }).then({
-                success : function(updatedRecords, notUpdatedRecord, options)
-                {
-                    console.log('preference update success', updatedRecords, notUpdatedRecord, options);
-                }
+                    success : function(updatedRecords, notUpdatedRecord, options)
+                    {
+                        console.log('preference update success', updatedRecords, notUpdatedRecord, options);
+                    },
+                    failure : function()
+                    {
+                        console.log("Failed to write preference: ", key, settings);
+                    }
             });
         },
         _getWipKey : function(project, state)
@@ -186,15 +201,19 @@ Ext.define('wip-limits', {
                     workspace : this.getContext().getWorkspace(),
                     filterByName : key
             }).then({
-                success : function(prefs)
-                {
-                    console.log("prefs:", prefs, "prefs[key]: ", prefs[key]);
-                    if (prefs && prefs[key])
+                    success : function(prefs)
                     {
-                        var values = Ext.JSON.decode(prefs[key]);
-                        return values;
+                        console.log("prefs:", prefs, "prefs[key]: ", prefs[key]);
+                        if (prefs && prefs[key])
+                        {
+                            var values = Ext.JSON.decode(prefs[key]);
+                            return values;
+                        }
+                    },
+                    failure : function()
+                    {
+                        console.log("Failed to get WIP limit: ", key);
                     }
-                }
             });
         }
 });

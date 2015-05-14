@@ -9,6 +9,7 @@
         Rally.onReady(function () {
                 Ext.define('rally.app.timebox-selector', {
         extend : 'Rally.app.App',
+        alias : 'widget.timebox-selector',
         componentCls : 'app',
         currentTimebox : null,
         layout : 'hbox',
@@ -2319,7 +2320,7 @@ Ext
             var app = this;
             console.log("creating timebox");
             this._timeboxSelector = this.add({
-                    xtype : 'rally.app.timebox-selector',
+                    xtype : 'timebox-selector',
                     context : this.getContext()
             });
         },

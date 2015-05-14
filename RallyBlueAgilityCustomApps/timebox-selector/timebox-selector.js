@@ -1,5 +1,6 @@
 Ext.define('rally.app.timebox-selector', {
         extend : 'Rally.app.App',
+        alias : 'widget.timebox-selector',
         componentCls : 'app',
         currentTimebox : null,
         layout : 'hbox',
