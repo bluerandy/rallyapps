@@ -1,7 +1,7 @@
 {
 	"name": "timebox-selector",
 	"className": "timebox-selector",
-	"server": "https://rally1.rallydev.com",
+	"server": "https://rallyonprem.sys.cigna.com",
 	"sdk": "2.0rc3",
 	"javascript": 
 	[

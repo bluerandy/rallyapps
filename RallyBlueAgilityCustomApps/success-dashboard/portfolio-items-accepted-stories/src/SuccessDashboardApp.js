@@ -350,9 +350,10 @@ Ext.define('Rally.apps.portfoliodrilldown.SuccessDashboardApp', {
         _releaseChanged : function(release)
         {
             console.log("Success Dashboard: Got release changed message", release);
-            if (release != this.currentTimebox)
+            if (release.get('Name') != this.currentTimebox.get('Name'))
             {
                 this.getContext().setTimeboxScope(release, 'release');
+                this.currentTimebox = release;
                 this._updateGridBoard(this.createReleaseFilter(release));
             } else
             {
@@ -376,9 +377,10 @@ Ext.define('Rally.apps.portfoliodrilldown.SuccessDashboardApp', {
         _iterationChanged : function(iteration)
         {
             console.log("Success Dashboard: Got iteration changed message", iteration);
-            if (iteration != this.currentTimebox)
+            if (iteration.get('Name') != this.currentTimebox.get('Name'))
             {
                 this.getContext().setTimeboxScope(iteration, 'iteration');
+                this.currentTimebox = iteration;
                 this._updateGridBoard(this._createIterationFilter(iteration));
             } else
             {

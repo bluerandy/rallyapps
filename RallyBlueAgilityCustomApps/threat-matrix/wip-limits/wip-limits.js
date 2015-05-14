@@ -9,11 +9,6 @@ Ext.define('wip-limits', {
         },
         _updateBoard : function(portfolioTimeboxFilter, storyTimeboxFilter)
         {
-            var me = this;
-            var model = Rally.data.ModelFactory.getModel({
-                    type : 'UserStory',
-                    scope : this
-            });
             var store = Ext.create('Rally.data.wsapi.Store', {
                     model : 'hierarchicalrequirement',
                     fetch : [
@@ -29,22 +24,15 @@ Ext.define('wip-limits', {
         },
         _onStoriesLoaded : function(store, stories)
         {
-            var wip_test = [];
-            var tmp = {
-                    "project" : "ACP",
-                    "In-Progress" : 10,
-                    "Completed" : 5
-            };
-            wip_test.push(tmp);
-            var g = _.groupBy(stories, function(t)
+            var me = this;
+            var projectGroup = _.groupBy(stories, function(t)
             {
                 return t.get("Project") ? t.get("Project")._refObjectName : "none";
             });
-            // console.log("Group: ", g);
-            var summaries = _.map(_.keys(g), function(key)
+            var summaries = _.map(_.keys(projectGroup), function(project)
             {
-                var stories = g[key];
-                // console.log("Stories: ", stories);
+                var stories = projectGroup[project];
+                this.currentProject = project;
                 var counts = _.countBy(stories, function(story)
                 {
                     return story.get('ScheduleState');
@@ -60,30 +48,37 @@ Ext.define('wip-limits', {
                 _.each(states, function(state)
                 {
                     values[state] = _.isUndefined(counts[state]) ? 0 : counts[state];
-                    var wip = this._getWipLimit(key, state);
-                    console.log("Got WIP: ", wip);
-                    var wipKey = state + "WIP";
-                    if (wip !== null)
+                    console.log("Getting wip: ", project, state);
+                    var wip = this._getWipLimit(project, state);
+                    var wipKey = state + 'WIP';
+                    if (wip !== null && wip !== undefined)
                     {
+                        console.log("wipKey: " + wipKey, "wip: ", wip);
                         values[wipKey] = wip;
                     } else
                     {
                         values[wipKey] = 0;
                     }
-                });
-                values["project"] = key;
+                }, me);
+                values.project = this.currentProject;
                 return values;
-            });
+            }, this);
             console.log("Summaries: ", summaries);
-            var newStore = Ext.create('Rally.data.custom.Store', {
+            var newStore = Rally.data.custom.Store.create({
                     data : summaries,
+                    context : this.getContext(),
                     listeners : {
                         update : function(store, record, op, fieldNames, eOpts)
                         {
-                            console.log("rec:", op, record, fieldNames);
-                            var project = record.get('project');
-                            var state;
-                            this._setWipLimit(project, state, op);
+                            if (op == 'edit')
+                            {
+                                console.log("rec:", op, record, fieldNames);
+                                var project = record.get('project');
+                                var fieldName = _.first(fieldNames);
+                                var value = record.get(fieldName);
+                                console.log("Writing project: " + project + "  field: " + fieldName + "  value: " + value);
+                                me._setWipLimit(project, fieldName, value);
+                            }
                         }
                     }
             });
@@ -102,43 +97,50 @@ Ext.define('wip-limits', {
                     columnCfgs : [
                                     {
                                             text : 'Project',
-                                            dataIndex : 'project'
+                                            dataIndex : 'project',
+                                            align : 'center'
                                     },
                                     {
                                             text : 'Defined',
                                             dataIndex : 'Defined',
-                                            renderer : that.renderLimit
+                                            renderer : that.renderLimit,
+                                            align : 'center'
                                     },
                                     {
                                             text : 'Defined Limit',
                                             dataIndex : 'DefinedWIP',
                                             editor : {
                                                 xtype : 'textfield'
-                                            }
+                                            },
+                                            align : 'center'
                                     },
                                     {
                                             text : 'In-Progress',
                                             dataIndex : 'In-Progress',
-                                            renderer : that.renderLimit
+                                            renderer : that.renderLimit,
+                                            align : 'center'
                                     },
                                     {
                                             text : 'In-Progress Limit',
                                             dataIndex : 'In-ProgressWIP',
                                             editor : {
                                                 xtype : 'textfield'
-                                            }
+                                            },
+                                            align : 'center'
                                     },
                                     {
                                             text : 'Completed',
                                             dataIndex : 'Completed',
-                                            renderer : that.renderLimit
+                                            renderer : that.renderLimit,
+                                            align : 'center'
                                     },
                                     {
                                             text : 'Completed Limit',
                                             dataIndex : 'CompletedWIP',
                                             editor : {
                                                 xtype : 'textfield'
-                                            }
+                                            },
+                                            align : 'center'
                                     }
                     ]
             });
@@ -149,13 +151,13 @@ Ext.define('wip-limits', {
             var field = null;
             switch (col) {
                 case 2:
-                    field = "defined-wip";
+                    field = "DefinedWIP";
                     break;
                 case 4:
-                    field = "in-progress-wip";
+                    field = "In-ProgressWIP";
                     break;
                 case 6:
-                    field = "completed-wip";
+                    field = "CompletedWIP";
                     break;
             }
             console.log("Value: " + value + "  limit: " + record.get(field));
@@ -168,34 +170,42 @@ Ext.define('wip-limits', {
         },
         _setWipLimit : function(project, state, limit)
         {
-            settings['project-wip:' + project + ':' + state] = Ext.JSON.Encode(limit);
-            console.log("Setting wip limit of " + limit + " for project: " + project);
+            var key = this._getWipKey(project, state);
+            var settings = {};
+            settings[key] = Ext.JSON.encode(limit);
+            console.log("Setting wip limit of " + limit + " for project: " + project, settings);
             Rally.data.PreferenceManager.update({
                     workspace : this.getContext().getWorkspace(),
                     settings : settings,
-                    scope : this,
-                    success : function(updatedRecords, notUpdatedRecord, options)
-                    {
-                        me.console.log('success', me.getContext().getWorkspace(), updatedRecords, notUpdatedRecord, options);
-                    }
+                    scope : this
+            }).then({
+                success : function(updatedRecords, notUpdatedRecord, options)
+                {
+                    console.log('preference update success', updatedRecords, notUpdatedRecord, options);
+                }
             });
+        },
+        _getWipKey : function(project, state)
+        {
+            return 'project-wip:' + project + ':' + state;
         },
         _getWipLimit : function(project, state)
         {
             console.log("Getting wip limit for project: " + project);
+            var key = this._getWipKey(project, state);
             Rally.data.PreferenceManager.load({
                     workspace : this.getContext().getWorkspace(),
-                    filterByName : 'project-wip:' + project + ':' + state,
-                    success : function(prefs)
+                    filterByName : key
+            }).then({
+                success : function(prefs)
+                {
+                    console.log("prefs:", prefs, "prefs[key]: ", prefs[key]);
+                    if (prefs && prefs[key])
                     {
-                        this.console.log("prefs", prefs);
-                        if (prefs && prefs[key])
-                        {
-                            var values = Ext.JSON.decode(prefs[key]);
-                            console.console.log(values);
-                            return values;
-                        }
+                        var values = Ext.JSON.decode(prefs[key]);
+                        return values;
                     }
+                }
             });
         }
 });

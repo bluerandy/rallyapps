@@ -1,23 +1,16 @@
 Ext.define('rally.app.timebox-selector', {
-        extend : 'Ext.Container',
-        currentTimebox : null,
+        extend : 'Rally.app.App',
         componentCls : 'app',
-        alias : 'rally.app.timebox-selector',
-        cls : 'rally.app.timebox-selector',
+        currentTimebox : null,
         layout : 'hbox',
         width : '100%',
         mixins : [
             'Rally.Messageable'
         ],
-        constructor : function()
+        launch : function()
         {
-            console.log("timebox constructor");
+            console.log("timebox launch");
             this.stateId = Rally.environment.getContext().getScopedStateId('timebox-filter');
-        },
-        initComponent : function()
-        {
-            console.log("timebox init");
-            this.callParent(arguments);
             this._createReleaseCombo();
             this.subscribe(this, 'requestTimebox', this._requestTimebox, this);
         },
@@ -57,6 +50,7 @@ Ext.define('rally.app.timebox-selector', {
                             change : function(t, newVal, oldVal, eOpts)
                             {
                                 var release = t.getRecord();
+                                this.currentTimebox = release;
                                 this.publish('timeboxReleaseChanged', release);
                                 this._updateIterationCombo(release);
                             },
@@ -111,6 +105,7 @@ Ext.define('rally.app.timebox-selector', {
                             change : function(t, newVal, oldVal, eOpts)
                             {
                                 var iteration = t.getRecord();
+                                this.currentTimebox = iteration;
                                 this.publish('timeboxIterationChanged', iteration);
                             },
                             scope : this
