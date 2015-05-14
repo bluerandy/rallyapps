@@ -1,13 +1,9 @@
 Ext.define('Rally.apps.releasetracking.VisualizationBannerApp', {
         extend : 'Rally.app.TimeboxScopedApp',
         requires : [
-                        'Rally.data.wsapi.TreeStoreBuilder',
-                        'Rally.ui.cardboard.plugin.FixedHeader',
-                        'Rally.ui.cardboard.plugin.ColumnPolicy',
                         'Rally.app.Message',
                         'Rally.clientmetrics.ClientMetricsRecordable',
-                        'Rally.apps.releasetracking.StatsBanner',
-                        'timebox-selector'
+                        'Rally.apps.releasetracking.StatsBanner'
         ],
         mixins : [
                         'Rally.clientmetrics.ClientMetricsRecordable',
@@ -27,17 +23,18 @@ Ext.define('Rally.apps.releasetracking.VisualizationBannerApp', {
             console.log("Launching banner app...");
             this.subscribe(this, 'timeboxReleaseChanged', this._releaseChanged, this);
             this.subscribe(this, 'timeboxIterationChanged', this._iterationChanged, this);
+            var app = this;
             console.log("creating timebox");
-            this.add({
-                    xtype : 'timebox-selector'
- //                   context : this.getContext()
+            this._timeboxSelector = this.add({
+                    xtype : 'rally.app.timebox-selector',
+                    context : this.getContext()
             });
         },
         _releaseChanged : function(release)
         {
             console.log("Got release changed message: ", release);
             this.getContext().setTimeboxScope(release, 'release');
-            // this._updateStatsBanner();
+            this._updateStatsBanner();
         },
         _iterationChanged : function(iteration)
         {
@@ -45,7 +42,7 @@ Ext.define('Rally.apps.releasetracking.VisualizationBannerApp', {
                 console.log("iteration null");
             console.log("Got iteration changed message: ", iteration);
             this.getContext().setTimeboxScope(iteration, 'iteration');
-            // this._updateStatsBanner();
+            this._updateStatsBanner();
         },
         _updateStatsBanner : function()
         {

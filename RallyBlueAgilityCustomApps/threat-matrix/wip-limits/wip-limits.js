@@ -5,8 +5,6 @@ Ext.define('wip-limits', {
         ],
         launch : function()
         {
-            this.subscribe(this, 'timeboxReleaseChanged', this._releaseChanged, this);
-            this.subscribe(this, 'timeboxIterationChanged', this._iterationChanged, this);
             this._updateBoard();
         },
         _updateBoard : function(portfolioTimeboxFilter, storyTimeboxFilter)
@@ -32,10 +30,11 @@ Ext.define('wip-limits', {
         _onStoriesLoaded : function(store, stories)
         {
             var wip_test = [];
-            var tmp = {};
-            tmp["project"] = "IA-Program > IA Project Governance & Leadership";
-            tmp["In-Progress"] = 10;
-            tmp["Completed"] = 5;
+            var tmp = {
+                    "project" : "ACP",
+                    "In-Progress" : 10,
+                    "Completed" : 5
+            };
             wip_test.push(tmp);
             var g = _.groupBy(stories, function(t)
             {
@@ -51,32 +50,28 @@ Ext.define('wip-limits', {
                     return story.get('ScheduleState');
                 });
                 var values = {};
-                _.each([
+                var states = [
                                 'Backlog',
                                 'Defined',
                                 'In-Progress',
                                 'Completed',
                                 'Accepted'
-                ], function(state)
+                ];
+                _.each(states, function(state)
                 {
                     values[state] = _.isUndefined(counts[state]) ? 0 : counts[state];
-                });
-                _.each(wip_test, function(wip)
-                {
-                    if (wip['project'] == key)
+                    var wip = this._getWipLimit(key, state);
+                    console.log("Got WIP: ", wip);
+                    var wipKey = state + "WIP";
+                    if (wip !== null)
                     {
-                        values["in-progress-wip"] = wip['In-Progress'];
-                        values["completed-wip"] = wip['Completed'];
-                        values['defined-wip'] = 0;
+                        values[wipKey] = wip;
                     } else
                     {
-                        values["in-progress-wip"] = 0;
-                        values["completed-wip"] = 0;
-                        values['defined-wip'] = 0;
+                        values[wipKey] = 0;
                     }
                 });
                 values["project"] = key;
-                // console.log("Counts: ", counts);
                 return values;
             });
             console.log("Summaries: ", summaries);
@@ -86,6 +81,9 @@ Ext.define('wip-limits', {
                         update : function(store, record, op, fieldNames, eOpts)
                         {
                             console.log("rec:", op, record, fieldNames);
+                            var project = record.get('project');
+                            var state;
+                            this._setWipLimit(project, state, op);
                         }
                     }
             });
@@ -93,6 +91,7 @@ Ext.define('wip-limits', {
         },
         _displayGrid : function(store)
         {
+            var that = this;
             this.remove('workqueue');
             this.add({
                     xtype : 'rallygrid',
@@ -106,91 +105,70 @@ Ext.define('wip-limits', {
                                             dataIndex : 'project'
                                     },
                                     {
-                                            text : 'Backlog',
-                                            dataIndex : 'Backlog'
-                                    },
-                                    {
                                             text : 'Defined',
-                                            dataIndex : 'Defined'
+                                            dataIndex : 'Defined',
+                                            renderer : that.renderLimit
                                     },
                                     {
                                             text : 'Defined Limit',
-                                            dataIndex : 'defined-wip',
+                                            dataIndex : 'DefinedWIP',
                                             editor : {
                                                 xtype : 'textfield'
                                             }
                                     },
                                     {
                                             text : 'In-Progress',
-                                            dataIndex : 'In-Progress'
+                                            dataIndex : 'In-Progress',
+                                            renderer : that.renderLimit
                                     },
                                     {
                                             text : 'In-Progress Limit',
-                                            dataIndex : 'in-progress-wip',
+                                            dataIndex : 'In-ProgressWIP',
                                             editor : {
                                                 xtype : 'textfield'
                                             }
                                     },
                                     {
                                             text : 'Completed',
-                                            dataIndex : 'Completed'
+                                            dataIndex : 'Completed',
+                                            renderer : that.renderLimit
                                     },
                                     {
                                             text : 'Completed Limit',
-                                            dataIndex : 'completed-wip',
+                                            dataIndex : 'CompletedWIP',
                                             editor : {
                                                 xtype : 'textfield'
                                             }
-                                    },
-                                    {
-                                            text : 'Accepted',
-                                            dataIndex : 'Accepted'
                                     }
                     ]
             });
         },
-        _releaseChanged : function(release)
+        renderLimit : function(value, meta, record, row, col, store, gridView)
         {
-            var releaseStartFilter = Ext.create('Rally.data.wsapi.Filter', {
-                    property : 'PlannedEndDate',
-                    operator : '>=',
-                    value : Rally.util.DateTime.toIsoString(release.get('ReleaseStartDate'))
-            });
-            var releaseEndFilter = Ext.create('Rally.data.wsapi.Filter', {
-                    property : 'PlannedEndDate',
-                    operator : '<=',
-                    value : Rally.util.DateTime.toIsoString(release.get('ReleaseDate'))
-            });
-            var portfolioTimeboxFilter = releaseEndFilter.and(releaseStartFilter);
-            var storyFilter = Ext.create('Rally.data.wsapi.Filter', {
-                    property : 'Release.Name',
-                    value : release.get('Name')
-            });
-            this.getContext().setTimeboxScope(release, 'release');
-            this._updateBoard(portfolioTimeboxFilter, storyFilter);
+            console.log("Row: " + row + "  col: " + col, "Value: " + value, "Record: ", record);
+            var field = null;
+            switch (col) {
+                case 2:
+                    field = "defined-wip";
+                    break;
+                case 4:
+                    field = "in-progress-wip";
+                    break;
+                case 6:
+                    field = "completed-wip";
+                    break;
+            }
+            console.log("Value: " + value + "  limit: " + record.get(field));
+            if (value > record.get(field))
+            {
+                console.log("setting meta: ", meta);
+                meta.tdCls = 'over-limit';
+            }
+            return value;
         },
-        _iterationChanged : function(iteration)
+        _setWipLimit : function(project, state, limit)
         {
-            var iterationStartFilter = Ext.create('Rally.data.wsapi.Filter', {
-                    property : 'PlannedEndDate',
-                    operator : '>=',
-                    value : Rally.util.DateTime.toIsoString(iteration.get('StartDate'))
-            });
-            var iterationEndFilter = Ext.create('Rally.data.wsapi.Filter', {
-                    property : 'PlannedEndDate',
-                    operator : '<=',
-                    value : Rally.util.DateTime.toIsoString(iteration.get('EndDate'))
-            });
-            var portfolioTimeboxFilter = iterationStartFilter.and(iterationEndFilter);
-            var storyFilter = Ext.create('Rally.data.wsapi.Filter', {
-                    property : 'Iteration.Name',
-                    value : iteration.get('Name')
-            });
-            this.getContext().setTimeboxScope(iteration, 'iteration');
-            this._updateBoard(portfolioTimeboxFilter, storyFilter);
-        },
-        setWipLimit : function(project, limit)
-        {
+            settings['project-wip:' + project + ':' + state] = Ext.JSON.Encode(limit);
             console.log("Setting wip limit of " + limit + " for project: " + project);
             Rally.data.PreferenceManager.update({
                     workspace : this.getContext().getWorkspace(),
@@ -199,33 +177,15 @@ Ext.define('wip-limits', {
                     success : function(updatedRecords, notUpdatedRecord, options)
                     {
                         me.console.log('success', me.getContext().getWorkspace(), updatedRecords, notUpdatedRecord, options);
-                        if (notUpdatedRecord.length > 0)
-                        {
-                            // We need to intervene and save directly
-                            me.console.log('PreferenceManager update did not work;  Saving preferences directly.');
-                            me._savePrefs(key, settings[key]).then({
-                                failure : function()
-                                {
-                                    Rally.ui.notify.Notifier.showWarning({
-                                        message : 'Options not saved to Preferences.'
-                                    });
-                                }
-                            });
-                        } else
-                        {
-                            Rally.ui.notify.Notifier.show({
-                                message : 'Options Saved to Preferences.'
-                            });
-                        }
                     }
             });
         },
-        getWipLimit : function(project)
+        _getWipLimit : function(project, state)
         {
             console.log("Getting wip limit for project: " + project);
             Rally.data.PreferenceManager.load({
                     workspace : this.getContext().getWorkspace(),
-                    filterByName : key,
+                    filterByName : 'project-wip:' + project + ':' + state,
                     success : function(prefs)
                     {
                         this.console.log("prefs", prefs);
@@ -233,25 +193,7 @@ Ext.define('wip-limits', {
                         {
                             var values = Ext.JSON.decode(prefs[key]);
                             console.console.log(values);
-                            me.down('#field_values').setValue(values.join('\r\n'));
-                        }
-                    }
-            });
-        },
-        getWipLimits : function()
-        {
-            console.log("Getting all wip limits");
-            Rally.data.PreferenceManager.load({
-                    workspace : this.getContext().getWorkspace(),
-                    filterByName : key,
-                    success : function(prefs)
-                    {
-                        this.console.log("prefs", prefs);
-                        if (prefs && prefs[key])
-                        {
-                            var values = Ext.JSON.decode(prefs[key]);
-                            console.console.log(values);
-                            me.down('#field_values').setValue(values.join('\r\n'));
+                            return values;
                         }
                     }
             });

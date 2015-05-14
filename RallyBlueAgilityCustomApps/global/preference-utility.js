@@ -37,7 +37,7 @@ Ext.define('Rally.PreferenceUtility', {
                     }
             });
         },
-        setWipLimit : function(project, limit)
+        setWipLimits : function(project, limits)
         {
             console.log("Setting wip limit of " + limit + " for project: " + project);
             Rally.data.PreferenceManager.update({

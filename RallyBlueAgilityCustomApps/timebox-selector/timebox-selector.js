@@ -1,9 +1,9 @@
-Ext.define('timebox-selector', {
+Ext.define('rally.app.timebox-selector', {
         extend : 'Ext.Container',
         currentTimebox : null,
         componentCls : 'app',
-        alias : 'timebox-selector',
-        cls : 'timebox-selector',
+        alias : 'rally.app.timebox-selector',
+        cls : 'rally.app.timebox-selector',
         layout : 'hbox',
         width : '100%',
         mixins : [
