@@ -79,9 +79,6 @@ Ext.define('Rally.apps.releasetracking.StatsBanner', {
                     limit : Infinity,
                     requester : this
             });
-            // need to configure the items at the instance level,
-            // not the class level (i.e. don't use the 'defaults'
-            // config)
             this.items = this._configureItems(this.items);
             this.on('expand', this._onExpand, this);
             this.on('collapse', this._onCollapse, this);

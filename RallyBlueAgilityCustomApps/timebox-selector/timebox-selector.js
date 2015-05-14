@@ -15,8 +15,9 @@ Ext.define('rally.app.timebox-selector', {
             this._createReleaseCombo();
             this.subscribe(this, 'requestTimebox', this._requestTimebox, this);
         },
-        _requestTimebox : function()
+        _requestTimebox : function(source)
         {
+            console.log('Got request timebox message', source);
             if (this.currentTimebox !== null)
             {
                 if (this.currentTimebox.get('ReleaseDate'))
@@ -30,6 +31,7 @@ Ext.define('rally.app.timebox-selector', {
         },
         _createReleaseCombo : function()
         {
+            var that = this;
             console.log("Creating release combo...");
             this._releaseCombo = this.add({
                     xtype : 'rallyreleasecombobox',
@@ -55,12 +57,13 @@ Ext.define('rally.app.timebox-selector', {
                                 this.publish('timeboxReleaseChanged', release);
                                 this._updateIterationCombo(release);
                             },
-                            scope : this
+                            scope : that
                     }
             });
         },
         _updateIterationCombo : function(release)
         {
+            var that = this;
             console.log("Creating iteration combo...");
             this.remove('globaliterationpicker');
             var endFilter = Ext.create('Rally.data.wsapi.Filter', {
@@ -74,7 +77,6 @@ Ext.define('rally.app.timebox-selector', {
                     value : Rally.util.DateTime.toIsoString(release.get('ReleaseStartDate'))
             });
             var filters = endFilter.and(startFilter);
-            console.log("Filters: ", filters);
             this._iterationCombo = this.add({
                     xtype : 'rallyiterationcombobox',
                     itemId : 'globaliterationpicker',
@@ -109,7 +111,7 @@ Ext.define('rally.app.timebox-selector', {
                                 this.currentTimebox = iteration;
                                 this.publish('timeboxIterationChanged', iteration);
                             },
-                            scope : this
+                            scope : that
                     }
             });
         }

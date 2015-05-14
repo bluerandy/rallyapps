@@ -585,8 +585,6 @@
                 var filters = [];
                 if (childTypeMap == 'hierarchicalrequirement')
                 {
-                    console.log("TreeStore timeFilter: ", timeFilter);
-                    filters.push(this.timeFilter);
                     var filter = Ext.create('Rally.data.wsapi.Filter', {
                             property : 'ScheduleState',
                             value : "Accepted",
