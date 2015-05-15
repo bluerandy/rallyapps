@@ -14,40 +14,28 @@
     Rally
                     .onReady(function()
                     {
-                        Ext.define('rally.app.timebox-selector', {
-                                extend : 'Rally.app.App',
-                                alias : 'widget.timebox-selector',
+                        Ext.define('timebox-selector', {
+                                extend : 'Ext.Container',
                                 componentCls : 'app',
-                                currentTimebox : null,
+                                alias : 'widget.timebox-selector',
+                                cls : 'timebox-selector',
                                 layout : 'hbox',
                                 width : '100%',
                                 mixins : [
                                     'Rally.Messageable'
                                 ],
-                                launch : function()
+                                constructor : function()
                                 {
-                                    console.log("timebox launch");
                                     this.stateId = Rally.environment.getContext().getScopedStateId('timebox-filter');
-                                    this._createReleaseCombo();
-                                    this.subscribe(this, 'requestTimebox', this._requestTimebox, this);
+                                    this.callParent(arguments);
                                 },
-                                _requestTimebox : function(source)
+                                initComponent : function()
                                 {
-                                    console.log('Got request timebox message', source);
-                                    if (this.currentTimebox !== null)
-                                    {
-                                        if (this.currentTimebox.get('ReleaseDate'))
-                                        {
-                                            this.publish('timeboxReleaseChanged', this.currentTimebox);
-                                        } else
-                                        {
-                                            this.publish("timeboxIterationChanged", this.currentTimebox);
-                                        }
-                                    }
+                                    this.callParent(arguments);
+                                    this._createReleaseCombo();
                                 },
                                 _createReleaseCombo : function()
                                 {
-                                    var that = this;
                                     console.log("Creating release combo...");
                                     this._releaseCombo = this.add({
                                             xtype : 'rallyreleasecombobox',
@@ -69,17 +57,15 @@
                                                     change : function(t, newVal, oldVal, eOpts)
                                                     {
                                                         var release = t.getRecord();
-                                                        this.currentTimebox = release;
                                                         this.publish('timeboxReleaseChanged', release);
                                                         this._updateIterationCombo(release);
                                                     },
-                                                    scope : that
+                                                    scope : this
                                             }
                                     });
                                 },
                                 _updateIterationCombo : function(release)
                                 {
-                                    var that = this;
                                     console.log("Creating iteration combo...");
                                     this.remove('globaliterationpicker');
                                     var endFilter = Ext.create('Rally.data.wsapi.Filter', {
@@ -93,6 +79,7 @@
                                             value : Rally.util.DateTime.toIsoString(release.get('ReleaseStartDate'))
                                     });
                                     var filters = endFilter.and(startFilter);
+                                    console.log("Filters: ", filters);
                                     this._iterationCombo = this.add({
                                             xtype : 'rallyiterationcombobox',
                                             itemId : 'globaliterationpicker',
@@ -124,10 +111,9 @@
                                                     change : function(t, newVal, oldVal, eOpts)
                                                     {
                                                         var iteration = t.getRecord();
-                                                        this.currentTimebox = iteration;
                                                         this.publish('timeboxIterationChanged', iteration);
                                                     },
-                                                    scope : that
+                                                    scope : this
                                             }
                                     });
                                 }
@@ -2325,7 +2311,7 @@
                                 width : '100%',
                                 stateful : true,
                                 config : {
-                                        context : this.getContext(),
+                                        context : null,
                                         expanded : true
                                 },
                                 items : [
@@ -2344,13 +2330,11 @@
                                 ],
                                 constructor : function()
                                 {
-                                    console.log('banner constructor');
                                     this.stateId = Rally.environment.getContext().getScopedStateId('stats-banner');
                                     this.callParent(arguments);
                                 },
                                 initComponent : function()
                                 {
-                                    console.log('banner init');
                                     this.subscribe(this, Rally.Message.objectDestroy, this._update, this);
                                     this.subscribe(this, Rally.Message.objectCreate, this._update, this);
                                     this.subscribe(this, Rally.Message.objectUpdate, this._update, this);
@@ -2379,18 +2363,19 @@
                                             ],
                                             useShallowFetch : true,
                                             filters : [
-                                                this.getContext().getTimeboxScope().getQueryFilter()
+                                                this.context.getTimeboxScope().getQueryFilter()
                                             ],
-                                            context : this.context,
+                                            context : this.context.getDataContext(),
                                             limit : Infinity,
                                             requester : this
                                     });
-                                    console.log('banner created store');
+                                    // need to configure the items at the instance level,
+                                    // not the class level (i.e. don't use the 'defaults'
+                                    // config)
                                     this.items = this._configureItems(this.items);
                                     this.on('expand', this._onExpand, this);
                                     this.on('collapse', this._onCollapse, this);
                                     this.callParent(arguments);
-                                    console.log('banner updating');
                                     this._update();
                                 },
                                 onRender : function()
@@ -2461,7 +2446,6 @@
                                 },
                                 _hasTimebox : function()
                                 {
-                                    console.log('timebox check: ', this.context.getTimeboxScope());
                                     return !!this.context.getTimeboxScope().getRecord();
                                 },
                                 _configureItems : function(items)
@@ -2476,7 +2460,6 @@
                                 {
                                     if (this._hasTimebox())
                                     {
-                                        console.log('has timebox, loading');
                                         this.store.load();
                                     }
                                 }
@@ -2484,6 +2467,9 @@
                         Ext.define('Rally.apps.releasetracking.VisualizationBannerApp', {
                                 extend : 'Rally.app.TimeboxScopedApp',
                                 requires : [
+                                                'Rally.data.wsapi.TreeStoreBuilder',
+                                                'Rally.ui.cardboard.plugin.FixedHeader',
+                                                'Rally.ui.cardboard.plugin.ColumnPolicy',
                                                 'Rally.app.Message',
                                                 'Rally.clientmetrics.ClientMetricsRecordable',
                                                 'Rally.apps.releasetracking.StatsBanner'
@@ -2495,7 +2481,6 @@
                                 componentCls : 'iterationtrackingboard',
                                 alias : 'widget.rallyreleasetrackingapp',
                                 scopeType : 'release',
-                                currentTimebox : null,
                                 autoScroll : false,
                                 config : {
                                     defaultSettings : {
@@ -2507,52 +2492,29 @@
                                     console.log("Launching banner app...");
                                     this.subscribe(this, 'timeboxReleaseChanged', this._releaseChanged, this);
                                     this.subscribe(this, 'timeboxIterationChanged', this._iterationChanged, this);
-                                    var app = this;
-                                    console.log("creating timebox");
-                                    this._timeboxSelector = this.add({
+                                    this.add({
                                             xtype : 'timebox-selector',
                                             context : this.getContext()
                                     });
-                                    if (this.currentTimebox === null)
-                                    {
-                                        console.log("timebox null, requesting timebox");
-                                        this.publish('requestTimebox', this);
-                                    }
                                 },
                                 _releaseChanged : function(release)
                                 {
-                                    console.log("Visualization banner: Got release changed message: ", release);
-                                    if (this.currentTimebox === null || release.get('Name') != this.currentTimebox.get('Name'))
-                                    {
-                                        console.log("visual release: setting timebox");
-                                        this.currentTimebox = release;
-                                        console.log("visual release: setting context timebox");
-                                        this.getContext().setTimeboxScope(release, 'release');
-                                        this._updateStatsBanner();
-                                    } else
-                                    {
-                                        console.log("Visualization: Release change message, no change");
-                                    }
+                                    console.log("Got release changed message: ", release);
+                                    this.getContext().setTimeboxScope(release, 'release');
+                                    this._updateStatsBanner();
                                 },
                                 _iterationChanged : function(iteration)
                                 {
-                                    console.log("Visualization banner: Got iteration changed message: ", iteration);
-                                    if (this.currentTimebox === null || iteration.get('Name') != this.currentTimebox.get('Name'))
-                                    {
-                                        console.log("visual iteration: setting timebox");
-                                        this.currentTimebox = iteration;
-                                        this.getContext().setTimeboxScope(iteration, 'iteration');
-                                        this._updateStatsBanner();
-                                    } else
-                                    {
-                                        console.log("Visualization: iteration change message, no change");
-                                    }
+                                    if (iteration === null)
+                                        console.log("iteration null");
+                                    console.log("Got iteration changed message: ", iteration);
+                                    //            this.getContext().setTimeboxScope(iteration, 'iteration');
+                                    this._updateStatsBanner();
                                 },
                                 _updateStatsBanner : function()
                                 {
                                     console.log("Creating stats banner...");
                                     this.remove('statsBanner');
-                                    console.log('removed old banner, adding new one');
                                     this._statsBanner = this.add({
                                             xtype : 'statsbanner',
                                             itemId : 'statsBanner',

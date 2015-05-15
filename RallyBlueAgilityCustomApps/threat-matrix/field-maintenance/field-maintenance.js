@@ -17,7 +17,7 @@ Ext.define('field-maintenance', {
                             'AcceptanceCriteria',
                             'Release',
                             'Iteration',
-                            'Owner',
+                            'Owner.UserName',
                             'Parent',
                             'Feature',
                             'c_ValueMetricKPI',
@@ -126,12 +126,12 @@ Ext.define('field-maintenance', {
                                 issue += '<li>No Owner set</li>';
                                 issueCount++;
                             }
-                            if (record.get('c_ValueMetricKPI') === null)
+                            if (me._isEmpty(record.get('c_ValueMetricKPI')))
                             {
                                 issue += '<li>No Value Metric defined</li>';
                                 issueCount++;
                             }
-                            if (record.get('Blocked') === true && record.get('BlockedReason') === null)
+                            if (record.get('Blocked') === true && me._isEmpty(record.get('BlockedReason')))
                             {
                                 issue += '<li>No Blocked Reason</li>';
                                 issueCount++;
@@ -139,17 +139,17 @@ Ext.define('field-maintenance', {
                             if (record.get('PortfolioItemTypeName'))
                             {
                                 record.set('__Type', record.get('PortfolioItemTypeName'));
-                                if (record.get('PortfolioItemTypeName') == 'Feature' && record.get('Parent') === null)
+                                if (record.get('PortfolioItemTypeName') == 'Feature' && me._isEmpty(record.get('Parent')))
                                 {
                                     issue += '<li>No Parent</li>';
                                     issueCount++;
                                 }
-                                if (record.get('PlannedStartDate') === null)
+                                if (me._isEmpty(record.get('PlannedStartDate')))
                                 {
                                     issue += '<li>No Planned Start Date</li>';
                                     issueCount++;
                                 }
-                                if (record.get('PlannedEndDate') === null)
+                                if (me._isEmpty(record.get('PlannedEndDate')))
                                 {
                                     issue += '<li>No Planned End Date</li>';
                                     issueCount++;
@@ -157,17 +157,17 @@ Ext.define('field-maintenance', {
                             } else
                             {
                                 record.set('__Type', 'User Story');
-                                if (record.get('Iteration') !== null && record.get('Release') === null)
+                                if (me._isEmpty(record.get('Iteration')) && me._isEmpty(record.get('Release')))
                                 {
                                     issue += '<li>No Release defined</li>';
                                     issueCount++;
                                 }
-                                if (record.get('c_AcceptanceCriteria') === null)
+                                if (me._isEmpty(record.get('c_AcceptanceCriteria')))
                                 {
                                     issue += '<li>No Acceptance Criteria</li>';
                                     issueCount++;
                                 }
-                                if (record.get('Parent') === null && record.get('Feature') === null)
+                                if (me._isEmpty(record.get('Parent')) && me._isEmpty(record.get('Feature')))
                                 {
                                     issue += '<li>No Parent</li>';
                                     issueCount++;
@@ -198,6 +198,10 @@ Ext.define('field-maintenance', {
             {
                 me.setLoading(false);
             });
+        },
+        _isEmpty : function(record)
+        {
+            return _.isNull(record) || _.isUndefined(record);
         },
         _loadAStoreWithAPromise : function(model_name, model_fields, filters)
         {
@@ -240,7 +244,8 @@ Ext.define('field-maintenance', {
                                             dataIndex : 'Name'
                                     },
                                     {
-                                        dataIndex : 'Owner'
+                                            text : 'Owner',
+                                            dataIndex : 'Owner.UserName'
                                     },
                                     {
                                             text : 'Issue(s)',

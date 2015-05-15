@@ -1,11 +1,12 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Visualization Board</title>
+<title>Visualization Board</title>
 
-    <script type="text/javascript" src="https://rallyonprem.sys.cigna.com/apps/2.0rc3/sdk.js"></script>
+<script type="text/javascript"
+	src="https://rallyonprem.sys.cigna.com/apps/2.0rc3/sdk.js"></script>
 
-    <script type="text/javascript">
+<script type="text/javascript">
         Rally.onReady(function () {
                 Ext.define("rally.app.timebox-selector",{extend:"Rally.app.App",alias:"widget.timebox-selector",componentCls:"app",currentTimebox:null,layout:"hbox",width:"100%",mixins:["Rally.Messageable"],launch:function(){console.log("timebox launch"),this.stateId=Rally.environment.getContext().getScopedStateId("timebox-filter"),this._createReleaseCombo(),this.subscribe(this,"requestTimebox",this._requestTimebox,this)},_requestTimebox:function(source){console.log("Got request timebox message",source),null!==this.currentTimebox&&(this.currentTimebox.get("ReleaseDate")?this.publish("timeboxReleaseChanged",this.currentTimebox):this.publish("timeboxIterationChanged",this.currentTimebox))},_createReleaseCombo:function(){var that=this;console.log("Creating release combo..."),this._releaseCombo=this.add({xtype:"rallyreleasecombobox",fieldLabel:"Program Increment",hideLabel:!1,labelPad:5,labelSeparator:":",labelWidth:130,width:280,labelAlign:"right",stateful:!1,stateId:"releasecombo",padding:5,context:Rally.environment.getContext(),showArrows:!1,growToLongestValue:!0,defaultToCurrentTimebox:!0,listeners:{change:function(t,newVal,oldVal,eOpts){var release=t.getRecord();this.currentTimebox=release,this.publish("timeboxReleaseChanged",release),this._updateIterationCombo(release)},scope:that}})},_updateIterationCombo:function(release){var that=this;console.log("Creating iteration combo..."),this.remove("globaliterationpicker");var endFilter=Ext.create("Rally.data.wsapi.Filter",{property:"EndDate",operator:"<=",value:Rally.util.DateTime.toIsoString(release.get("ReleaseDate"))}),startFilter=Ext.create("Rally.data.wsapi.Filter",{property:"StartDate",operator:">=",value:Rally.util.DateTime.toIsoString(release.get("ReleaseStartDate"))}),filters=endFilter.and(startFilter);this._iterationCombo=this.add({xtype:"rallyiterationcombobox",itemId:"globaliterationpicker",fieldLabel:"Sprint/Iteration",hideLabel:!1,labelPad:5,labelSeparator:":",labelWidth:100,labelAlign:"right",stateful:!1,padding:5,context:Rally.environment.getContext(),showArrows:!1,growToLongestValue:!0,stateId:"iterationcombo",allowBlank:!0,allowClear:!0,allowNoEntry:!0,noEntryText:"PI Scope",emptyText:"PI Scope",noEntryValue:null,defaultToCurrentTimebox:!1,defaultSelectPosition:"first",storeConfig:{remoteFilter:!0,filters:filters},listeners:{change:function(t,newVal,oldVal,eOpts){var iteration=t.getRecord();this.currentTimebox=iteration,this.publish("timeboxIterationChanged",iteration)},scope:that}})}});
                 (function(){var Ext=window.Ext4||window.Ext;Ext.define("Rally.apps.releasetracking.statsbanner.BannerWidget",{extend:"Ext.Component",alias:"widget.bannerwidget",config:{expanded:!0},cls:"stat-panel",data:{},tpl:['<div class="expanded-widget"></div>','<div class="collapsed-widget"></div>'],onRender:function(){this.expanded?this.removeCls("collapsed"):this.addCls("collapsed"),this.callParent(arguments)},expand:function(){this.removeCls("collapsed"),this.setExpanded(!0)},collapse:function(){this.addCls("collapsed"),this.setExpanded(!1)}})})();
@@ -24,7 +25,7 @@
                 (function(){var Ext=window.Ext4||window.Ext;Ext.define("Rally.apps.releasetracking.statsbanner.IterationProgressDialog",{extend:"Rally.ui.dialog.Dialog",alias:"widget.statsbanneriterationprogressdialog",requires:["Rally.apps.releasetracking.statsbanner.IterationProgressDialogChartToggle","Rally.apps.releasetracking.statsbanner.iterationprogresscharts.PieChart","Rally.ui.carousel.Carousel"],config:{startingIndex:0,autoShow:!0,draggable:!0,disableScroll:!0,width:820,height:650,closable:!0,store:null,context:null},layout:{type:"vbox",align:"center"},cls:"iteration-progress-dialog",constructor:function(config){this.initConfig(config||{}),this.callParent(arguments)},initComponent:function(){var chartWidth=704,chartHeight=570;this.callParent(arguments),this.carousel=this.add({xtype:"rallycarousel",showDots:!1,enableAnimations:!1,carouselItems:[{xtype:"statsbannerpiechart",width:chartWidth,height:chartHeight,context:this.context}],startingIndex:this.startingIndex,listeners:{carouselmove:{fn:this._onCarouselMove,scope:this},afterlayout:{fn:this._afterLayout,single:!0,scope:this}}})},_toggleButtonClick:function(toggleBtnContainer,buttonIndex){this._setChart(buttonIndex)},_afterLayout:function(){Ext.defer(this._setChart,10,this,[this.startingIndex])},_setChart:function(chartIndex){this.carousel.setCurrentItem(chartIndex),this.header.titleCmp.textEl.update(this.carousel.getCurrentItem().displayTitle)},_onCarouselMove:function(carousel){this._setChart(carousel.getCurrentItemIndex())}})})();
                 (function(){var Ext=window.Ext4||window.Ext;Ext.define("Rally.apps.releasetracking.statsbanner.IterationProgress",{extend:"Rally.apps.releasetracking.statsbanner.BannerWidget",alias:"widget.statsbanneriterationprogress",requires:["Rally.ui.carousel.Carousel","Rally.apps.releasetracking.statsbanner.iterationprogresscharts.MinimalPieChart","Rally.apps.releasetracking.statsbanner.iterationprogresscharts.PieChart","Rally.apps.releasetracking.statsbanner.IterationProgressDialog","Ext.state.Manager"],config:{context:null,store:null},currentChartDisplayed:0,stateId:"stats-banner-iteration-progress",stateful:!0,clientMetrics:{method:"_onChartClick",description:"opened IterationProgressDialog"},tpl:['<div class="expanded-widget">','<div class="stat-title"></div>','<div class="stat-metric">','<div class="stat-carousel"></div>',"</div>","</div>",'<div class="collapsed-widget">','<span class="metric-icon icon-pie"></span>','<div class="stat-title"></div>',"</div>"],constructor:function(config){this.stateId=Rally.environment.getContext().getScopedStateId(this.stateId),this.callParent(arguments)},initComponent:function(){this.mon(this.store,"datachanged",this.onDataChanged,this),this.callParent(arguments);var boundClickHandler=Ext.bind(this._onChartClick,this);this.carouselItems=[{xtype:"statsbannerminimalpiechart",width:150,height:60,minimalMode:!0,clickHandler:boundClickHandler,context:this.context,store:this.store}],_.each(this.carouselItems,function(carouselItem){carouselItem.listeners={ready:this._onChartReady,scope:this}},this),this._pendingChartReadies=this.carouselItems.length},expand:function(){this.callParent(),this.carousel&&0!==this.carousel.getWidth()||this.onDataChanged()},_onChartReady:function(){this._pendingChartReadies-=1,0===this._pendingChartReadies&&this.fireEvent("ready",this)},_onChartClick:function(){var currentIndex=this.carousel.getCurrentItemIndex();Ext.create("Rally.apps.releasetracking.statsbanner.IterationProgressDialog",{startingIndex:currentIndex,store:this.store,context:this.context})},_cleanupCarousel:function(){this.carousel&&(this.carousel.destroy(),delete this.carousel)},onDestroy:function(){this._cleanupCarousel(),this.callParent(arguments)},onRender:function(){this.callParent(arguments),this.getContext().getTimeboxScope().getRecord()||this._addPlaceholder()},applyState:function(state){state&&(this.currentChartDisplayed=state.currentChartDisplayed>this.carouselItems.length-1||0>state.currentChartDisplayed?0:state.currentChartDisplayed)},getState:function(){return{currentChartDisplayed:this.currentChartDisplayed}},onDataChanged:function(){this._cleanupCarousel(),this.rendered&&(this.getContext().getTimeboxScope().getRecord()?(this.update(),this.createCarousel()):this._addPlaceholder())},createCarousel:function(){this.carousel=Ext.create("Rally.ui.carousel.Carousel",{showHeader:!1,showDots:!0,smallDots:!0,renderTo:this.getEl().down(".stat-carousel"),height:75,layout:{type:"vbox",align:"center"},listeners:{currentitemset:this._updateTitle,carouselmove:this._updateTitle,scope:this},carouselItems:this.carouselItems}),Ext.isIE8m||this.carousel.setCurrentItem(this.currentChartDisplayed),this.carousel.on("carouselmove",this._chartShownChanged,this)},_updateTitle:function(carousel){_.each(this.getEl().query(".stat-title"),function(el){Ext.fly(el).update(carousel.getCurrentItem().displayTitle)},this)},_chartShownChanged:function(){var chartShown=_.findIndex(this.carouselItems,{xtype:this.carousel.getCurrentItem().xtype});this.currentChartDisplayed=chartShown||0,this.saveState()},_addPlaceholder:function(){this.update(),this.expanded&&(this.carousel=Ext.create("Ext.Container",{renderTo:this.getEl().down(".stat-carousel"),html:"no iteration data"}))}})})();
                 (function(){var Ext=window.Ext4||window.Ext;Ext.define("Rally.apps.releasetracking.statsbanner.CollapseExpand",{extend:"Rally.apps.releasetracking.statsbanner.BannerWidget",alias:"widget.statsbannercollapseexpand",requires:[],tpl:['<div class="expanded-widget">','<div class="toggle-icon icon-chevron-up"></div>',"</div>",'<div class="collapsed-widget">','<div class="toggle-icon icon-chevron-down"></div>',"</div>"],componentCls:"collapse-expand",bubbleEvents:["collapse","expand"],afterRender:function(){this.callParent(arguments),this.getEl().on("click",this._onCollapseExpandClick,this),this.fireEvent("ready",this)},_onCollapseExpandClick:function(){this.expanded?this.fireEvent("collapse",this):this.fireEvent("expand",this)},expand:function(){this.callParent(arguments),this.doComponentLayout()},collapse:function(){this.callParent(arguments),this.doComponentLayout()}})})();
-                Ext.define("Rally.apps.releasetracking.StatsBanner",{extend:"Ext.Container",alias:"widget.statsbanner",requires:["Rally.apps.releasetracking.statsbanner.PlannedVelocity","Rally.apps.releasetracking.statsbanner.TimeboxEnd","Rally.apps.releasetracking.statsbanner.LateStories","Rally.apps.releasetracking.statsbanner.AcceptedPoint","Rally.apps.releasetracking.statsbanner.AcceptedCount","Rally.apps.releasetracking.statsbanner.EstimatedStories","Rally.apps.releasetracking.statsbanner.IterationProgress","Rally.apps.releasetracking.statsbanner.CollapseExpand"],mixins:["Rally.Messageable","Rally.clientmetrics.ClientMetricsRecordable"],cls:"stats-banner",layout:"hbox",border:0,width:"100%",stateful:!0,config:{context:null,expanded:!0},items:[{xtype:"statsbannertimeboxend"},{xtype:"statsbannerestimatedstories"},{xtype:"statsbanneracceptedpoint"},{xtype:"statsbanneracceptedcount"}],constructor:function(){this.stateId=Rally.environment.getContext().getScopedStateId("stats-banner"),this.callParent(arguments)},initComponent:function(){this.subscribe(this,Rally.Message.objectDestroy,this._update,this),this.subscribe(this,Rally.Message.objectCreate,this._update,this),this.subscribe(this,Rally.Message.objectUpdate,this._update,this),this.subscribe(this,Rally.Message.bulkUpdate,this._update,this),this.store=Ext.create("Rally.data.wsapi.artifact.Store",{models:["PortfolioItem/Feature"],fetch:["Name","PercentDoneByStoryCount","PercentDoneByStoryPlanEstimate","Release[Name;ReleaseStartDate;ReleaseDate]","PreliminaryEstimate[Value]","LateChildCount","AcceptedLeafStoryPlanEstimateTotal","AcceptedLeafStoryCount","LeafStoryCount","LeafStoryPlanEstimateTotal","UnEstimatedLeafStoryCount","PlannedStartDate","PlannedEndDate","ActualStartDate","ActualEndDate","UserStories:summary[ScheduleState;PlanEstimate;ScheduleState+Blocked]"],useShallowFetch:!0,filters:[this.context.getTimeboxScope().getQueryFilter()],context:this.context.getDataContext(),limit:1/0,requester:this}),this.items=this._configureItems(this.items),this.on("expand",this._onExpand,this),this.on("collapse",this._onCollapse,this),this.callParent(arguments),this._update()},onRender:function(){this.expanded?this.removeCls("collapsed"):this.addCls("collapsed"),this._setExpandedOnChildItems(),this.callParent(arguments)},applyState:function(state){Ext.isDefined(state.expanded)&&this.setExpanded(state.expanded),this._setExpandedOnChildItems()},getState:function(){return{expanded:this.expanded}},_setExpandedOnChildItems:function(){_.each(this.items.getRange(),function(item){item.setExpanded(this.expanded)},this)},_getItemDefaults:function(){return{flex:1,context:this.context,store:this.store,listeners:{ready:this._onReady,scope:this}}},_onReady:function(){this._readyCount=(this._readyCount||0)+1,this._readyCount===this.items.getCount()&&(this.recordComponentReady(),delete this._readyCount)},_onCollapse:function(){this.addCls("collapsed"),this.setExpanded(!1),_.invoke(this.items.getRange(),"collapse")},_onExpand:function(){this.removeCls("collapsed"),this.setExpanded(!0),_.invoke(this.items.getRange(),"expand")},_hasTimebox:function(){return!!this.context.getTimeboxScope().getRecord()},_configureItems:function(items){var defaults=this._getItemDefaults();return _.map(items,function(item){return _.defaults(_.cloneDeep(item),defaults)})},_update:function(){this._hasTimebox()&&this.store.load()}});
+                Ext.define("Rally.apps.releasetracking.StatsBanner",{extend:"Ext.Container",alias:"widget.statsbanner",requires:["Rally.apps.releasetracking.statsbanner.PlannedVelocity","Rally.apps.releasetracking.statsbanner.TimeboxEnd","Rally.apps.releasetracking.statsbanner.LateStories","Rally.apps.releasetracking.statsbanner.AcceptedPoint","Rally.apps.releasetracking.statsbanner.AcceptedCount","Rally.apps.releasetracking.statsbanner.EstimatedStories","Rally.apps.releasetracking.statsbanner.IterationProgress","Rally.apps.releasetracking.statsbanner.CollapseExpand"],mixins:["Rally.Messageable","Rally.clientmetrics.ClientMetricsRecordable"],cls:"stats-banner",layout:"hbox",border:0,width:"100%",stateful:!0,config:{context:this.getContext(),expanded:!0},items:[{xtype:"statsbannertimeboxend"},{xtype:"statsbannerestimatedstories"},{xtype:"statsbanneracceptedpoint"},{xtype:"statsbanneracceptedcount"}],constructor:function(){console.log("banner constructor"),this.stateId=Rally.environment.getContext().getScopedStateId("stats-banner"),this.callParent(arguments)},initComponent:function(){console.log("banner init"),this.subscribe(this,Rally.Message.objectDestroy,this._update,this),this.subscribe(this,Rally.Message.objectCreate,this._update,this),this.subscribe(this,Rally.Message.objectUpdate,this._update,this),this.subscribe(this,Rally.Message.bulkUpdate,this._update,this),this.store=Ext.create("Rally.data.wsapi.artifact.Store",{models:["PortfolioItem/Feature"],fetch:["Name","PercentDoneByStoryCount","PercentDoneByStoryPlanEstimate","Release[Name;ReleaseStartDate;ReleaseDate]","PreliminaryEstimate[Value]","LateChildCount","AcceptedLeafStoryPlanEstimateTotal","AcceptedLeafStoryCount","LeafStoryCount","LeafStoryPlanEstimateTotal","UnEstimatedLeafStoryCount","PlannedStartDate","PlannedEndDate","ActualStartDate","ActualEndDate","UserStories:summary[ScheduleState;PlanEstimate;ScheduleState+Blocked]"],useShallowFetch:!0,filters:[this.getContext().getTimeboxScope().getQueryFilter()],context:this.context,limit:1/0,requester:this}),console.log("banner created store"),this.items=this._configureItems(this.items),this.on("expand",this._onExpand,this),this.on("collapse",this._onCollapse,this),this.callParent(arguments),console.log("banner updating"),this._update()},onRender:function(){this.expanded?this.removeCls("collapsed"):this.addCls("collapsed"),this._setExpandedOnChildItems(),this.callParent(arguments)},applyState:function(state){Ext.isDefined(state.expanded)&&this.setExpanded(state.expanded),this._setExpandedOnChildItems()},getState:function(){return{expanded:this.expanded}},_setExpandedOnChildItems:function(){_.each(this.items.getRange(),function(item){item.setExpanded(this.expanded)},this)},_getItemDefaults:function(){return{flex:1,context:this.context,store:this.store,listeners:{ready:this._onReady,scope:this}}},_onReady:function(){this._readyCount=(this._readyCount||0)+1,this._readyCount===this.items.getCount()&&(this.recordComponentReady(),delete this._readyCount)},_onCollapse:function(){this.addCls("collapsed"),this.setExpanded(!1),_.invoke(this.items.getRange(),"collapse")},_onExpand:function(){this.removeCls("collapsed"),this.setExpanded(!0),_.invoke(this.items.getRange(),"expand")},_hasTimebox:function(){return console.log("timebox check: ",this.context.getTimeboxScope()),!!this.context.getTimeboxScope().getRecord()},_configureItems:function(items){var defaults=this._getItemDefaults();return _.map(items,function(item){return _.defaults(_.cloneDeep(item),defaults)})},_update:function(){this._hasTimebox()&&(console.log("has timebox, loading"),this.store.load())}});
                 Ext.define("Rally.apps.releasetracking.VisualizationBannerApp",{extend:"Rally.app.TimeboxScopedApp",requires:["Rally.app.Message","Rally.clientmetrics.ClientMetricsRecordable","Rally.apps.releasetracking.StatsBanner"],mixins:["Rally.clientmetrics.ClientMetricsRecordable","Rally.Messageable"],componentCls:"iterationtrackingboard",alias:"widget.rallyreleasetrackingapp",scopeType:"release",currentTimebox:null,autoScroll:!1,config:{defaultSettings:{ignoreProjectScoping:!0}},launch:function(){console.log("Launching banner app..."),this.subscribe(this,"timeboxReleaseChanged",this._releaseChanged,this),this.subscribe(this,"timeboxIterationChanged",this._iterationChanged,this);var app=this;console.log("creating timebox"),this._timeboxSelector=this.add({xtype:"timebox-selector",context:this.getContext()}),null===this.currentTimebox&&(console.log("timebox null, requesting timebox"),this.publish("requestTimebox",this))},_releaseChanged:function(release){console.log("Visualization banner: Got release changed message: ",release),null===this.currentTimebox||release.get("Name")!=this.currentTimebox.get("Name")?(console.log("visual release: setting timebox"),this.currentTimebox=release,console.log("visual release: setting context timebox"),this.getContext().setTimeboxScope(release,"release"),this._updateStatsBanner()):console.log("Visualization: Release change message, no change")},_iterationChanged:function(iteration){console.log("Visualization banner: Got iteration changed message: ",iteration),null===this.currentTimebox||iteration.get("Name")!=this.currentTimebox.get("Name")?(console.log("visual iteration: setting timebox"),this.currentTimebox=iteration,this.getContext().setTimeboxScope(iteration,"iteration"),this._updateStatsBanner()):console.log("Visualization: iteration change message, no change")},_updateStatsBanner:function(){console.log("Creating stats banner..."),this.remove("statsBanner"),console.log("removed old banner, adding new one"),this._statsBanner=this.add({xtype:"statsbanner",itemId:"statsBanner",context:this.getContext(),margin:"0 0 5px 0"})}});
 
             Rally.launchApp('Rally.apps.releasetracking.VisualizationBannerApp', {
@@ -36,9 +37,279 @@
     </script>
 
 
-    <style type="text/css">
-        .stat-panel .collapsed-widget,.stat-panel .collapsed-widget>div{display:none}.stat-panel .expanded-widget,.stat-panel .expanded-widget>div{height:150px;display:block}.stat-panel.collapsed .collapsed-widget,.stat-panel.collapsed .collapsed-widget>div{display:inline-block}.stat-panel.collapsed .expanded-widget,.stat-panel.collapsed .expanded-widget>div{display:none}.stats-banner .stat-panel{border-top:1px solid #d6d6d6;border-left:1px solid #d6d6d6;border-bottom:1px solid #d6d6d6;height:220px;text-align:center}.stats-banner .stat-panel:first-child{border-left:0}.stats-banner .stat-panel:last-child{border-left-width:2px}.stats-banner .stat-panel .stat-title{color:#222;font-family:ProximaNovaSemiBold,Helvetica,Arial;font-size:14px;padding-top:5px}.stats-banner .stat-panel .stat-metric{color:#666;font-family:ProximaNovaLight,Helvetica,Arial;font-size:18px;height:220px;padding-top:20px}.stats-banner .stat-panel .stat-metric .metric-percent{display:inline;font-size:12px;vertical-align:super}.stats-banner .stat-panel .stat-metric .metric-icon{color:#888;font-size:18px;padding-right:5px}.stats-banner .stat-panel .stat-metric .metric-chart{position:absolute;top:22px;height:100%;width:100%}.stats-banner .stat-panel .stat-metric .metric-subtext{bottom:7px;color:#888;font-family:ProximaNova,Helvetica,Arial;font-size:11px;position:absolute;text-transform:lowercase;width:100%}.stats-banner .stat-panel .stat-metric .metric-chart-text{position:absolute;top:43px;width:100%}.stats-banner .stat-panel .stat-metric .metric-chart-text.percent-offset{left:3px;top:41px}.stats-banner .stat-panel .stat-metric .stat-secondary{color:#888;font-family:ProximaNova,Helvetica,Arial;font-size:11px;text-transform:lowercase}.stats-banner .stat-panel .stat-metric .stat-carousel{display:inline-block;font-family:ProximaNova,Helvetica,Arial;font-size:12px;margin-top:-20px}.stats-banner .stat-panel .stat-metric .stat-carousel .rally-carousel-pane .x-box-inner{top:0px !important}.stats-banner .stat-panel .stat-metric .stat-carousel .carousel>span{display:inline !important;width:auto !important}.stats-banner .stat-panel .stat-metric .stat-carousel .carousel>span>div{display:block !important}.stats-banner .stat-panel .stat-metric .stat-carousel .carousel .carousel-panel>span{display:inline !important;width:auto !important}.stats-banner .stat-panel .stat-metric .stat-carousel .carousel .carousel-panel>span>div{display:block !important}.stats-banner .stat-panel .chart .highcharts-container{cursor:pointer}.stats-banner .stat-panel .gauge .chart .highcharts-container{cursor:default}.stats-banner .stat-panel .header{display:none}.stats-banner .stat-panel.collapse-expand{background-color:#f6f6f6;width:23px}.stats-banner .stat-panel.collapse-expand .toggle-icon{color:#c0c0c0;font-size:18px;position:relative;right:1px}.stats-banner .stat-panel.collapse-expand:hover{cursor:pointer}.stats-banner .stat-panel.collapse-expand:hover .toggle-icon{color:#888}.stats-banner.collapsed .stat-panel{height:25px;padding-top:2px}.stats-banner.collapsed .stat-panel .metric-icon{color:#888;font-size:14px;padding-right:5px;vertical-align:middle}.stats-banner.collapsed .stat-panel .stat-title{color:#222;display:inline;font-family:ProximaNovaSemiBold,Helvetica,Arial;font-size:12px;vertical-align:middle}.stats-banner.collapsed .stat-panel .stat-metric{color:#888;display:inline;font-family:ProximaNova,Helvetica,Arial;font-size:14px;height:auto;padding-top:auto;padding-left:10px;vertical-align:middle}.stats-banner.collapsed .stat-panel .stat-metric .stat-metric-secondary{font-size:11px}.stats-banner.collapsed .stat-panel .stat-metric .metric-percent{font-size:10px;vertical-align:super}.pie-chart-legend{color:#3E576F;font-size:12px;padding:5px;border:1px solid #909090;-webkit-border-radius:5px;-moz-border-radius:5px;border-radius:5px}.pie-chart-legend .legend-swatch{width:17px;height:12px;border:1px solid #EEE;-webkit-border-radius:5px;-moz-border-radius:5px;border-radius:5px;float:left;margin:0 3px 0 6px}.pie-chart-legend .legend-swatch.defined-sample-swatch{background:#E0E0E0}.pie-chart-legend .legend-swatch.in-progress-sample-swatch{background:#00a9e0}.pie-chart-legend .legend-swatch.completed-sample-swatch{background:#8dc63f}.pie-chart-legend .legend-swatch.blocked-sample-swatch{background:#EF3F35}.iteration-progress-dialog .carousel .carousel-panel .scroll-button span{width:45px;height:50px;line-height:46px}.iteration-progress-dialog .carousel .carousel-panel .scroll-button span:hover{background-color:#e6e6e6;color:#666}.iteration-progress-toggle-button-group{margin-bottom:5px}.x-gecko .stats-banner.collapsed .stat-panel .stat-metric{line-height:20px;vertical-align:top}.x-gecko .stats-banner.collapsed .stat-panel .stat-metric .metric-percent{line-height:10px}.x-gecko.x-mac .stats-banner.collapsed .stat-panel .stat-metric{line-height:22px}
-    </style>
+<style type="text/css">
+.stat-panel .collapsed-widget, .stat-panel .collapsed-widget>div {
+	display: none
+}
+
+.stat-panel .expanded-widget, .stat-panel .expanded-widget>div {
+	height: 150px;
+	display: block
+}
+
+.stat-panel.collapsed .collapsed-widget, .stat-panel.collapsed .collapsed-widget>div
+	{
+	display: inline-block
+}
+
+.stat-panel.collapsed .expanded-widget, .stat-panel.collapsed .expanded-widget>div
+	{
+	display: none
+}
+
+.stats-banner .stat-panel {
+	border-top: 1px solid #d6d6d6;
+	border-left: 1px solid #d6d6d6;
+	border-bottom: 1px solid #d6d6d6;
+	height: 220px;
+	text-align: center
+}
+
+.stats-banner .stat-panel:first-child {
+	border-left: 0
+}
+
+.stats-banner .stat-panel:last-child {
+	border-left-width: 2px
+}
+
+.stats-banner .stat-panel .stat-title {
+	color: #222;
+	font-family: ProximaNovaSemiBold, Helvetica, Arial;
+	font-size: 14px;
+	padding-top: 5px
+}
+
+.stats-banner .stat-panel .stat-metric {
+	color: #666;
+	font-family: ProximaNovaLight, Helvetica, Arial;
+	font-size: 18px;
+	height: 220px;
+	padding-top: 20px
+}
+
+.stats-banner .stat-panel .stat-metric .metric-percent {
+	display: inline;
+	font-size: 12px;
+	vertical-align: super
+}
+
+.stats-banner .stat-panel .stat-metric .metric-icon {
+	color: #888;
+	font-size: 18px;
+	padding-right: 5px
+}
+
+.stats-banner .stat-panel .stat-metric .metric-chart {
+	position: absolute;
+	top: 22px;
+	height: 100%;
+	width: 100%
+}
+
+.stats-banner .stat-panel .stat-metric .metric-subtext {
+	bottom: 7px;
+	color: #888;
+	font-family: ProximaNova, Helvetica, Arial;
+	font-size: 11px;
+	position: absolute;
+	text-transform: lowercase;
+	width: 100%
+}
+
+.stats-banner .stat-panel .stat-metric .metric-chart-text {
+	position: absolute;
+	top: 43px;
+	width: 100%
+}
+
+.stats-banner .stat-panel .stat-metric .metric-chart-text.percent-offset
+	{
+	left: 3px;
+	top: 41px
+}
+
+.stats-banner .stat-panel .stat-metric .stat-secondary {
+	color: #888;
+	font-family: ProximaNova, Helvetica, Arial;
+	font-size: 11px;
+	text-transform: lowercase
+}
+
+.stats-banner .stat-panel .stat-metric .stat-carousel {
+	display: inline-block;
+	font-family: ProximaNova, Helvetica, Arial;
+	font-size: 12px;
+	margin-top: -20px
+}
+
+.stats-banner .stat-panel .stat-metric .stat-carousel .rally-carousel-pane .x-box-inner
+	{
+	top: 0px !important
+}
+
+.stats-banner .stat-panel .stat-metric .stat-carousel .carousel>span {
+	display: inline !important;
+	width: auto !important
+}
+
+.stats-banner .stat-panel .stat-metric .stat-carousel .carousel>span>div
+	{
+	display: block !important
+}
+
+.stats-banner .stat-panel .stat-metric .stat-carousel .carousel .carousel-panel>span
+	{
+	display: inline !important;
+	width: auto !important
+}
+
+.stats-banner .stat-panel .stat-metric .stat-carousel .carousel .carousel-panel>span>div
+	{
+	display: block !important
+}
+
+.stats-banner .stat-panel .chart .highcharts-container {
+	cursor: pointer
+}
+
+.stats-banner .stat-panel .gauge .chart .highcharts-container {
+	cursor: default
+}
+
+.stats-banner .stat-panel .header {
+	display: none
+}
+
+.stats-banner .stat-panel.collapse-expand {
+	background-color: #f6f6f6;
+	width: 23px
+}
+
+.stats-banner .stat-panel.collapse-expand .toggle-icon {
+	color: #c0c0c0;
+	font-size: 18px;
+	position: relative;
+	right: 1px
+}
+
+.stats-banner .stat-panel.collapse-expand:hover {
+	cursor: pointer
+}
+
+.stats-banner .stat-panel.collapse-expand:hover .toggle-icon {
+	color: #888
+}
+
+.stats-banner.collapsed .stat-panel {
+	height: 25px;
+	padding-top: 2px
+}
+
+.stats-banner.collapsed .stat-panel .metric-icon {
+	color: #888;
+	font-size: 14px;
+	padding-right: 5px;
+	vertical-align: middle
+}
+
+.stats-banner.collapsed .stat-panel .stat-title {
+	color: #222;
+	display: inline;
+	font-family: ProximaNovaSemiBold, Helvetica, Arial;
+	font-size: 12px;
+	vertical-align: middle
+}
+
+.stats-banner.collapsed .stat-panel .stat-metric {
+	color: #888;
+	display: inline;
+	font-family: ProximaNova, Helvetica, Arial;
+	font-size: 14px;
+	height: auto;
+	padding-top: auto;
+	padding-left: 10px;
+	vertical-align: middle
+}
+
+.stats-banner.collapsed .stat-panel .stat-metric .stat-metric-secondary
+	{
+	font-size: 11px
+}
+
+.stats-banner.collapsed .stat-panel .stat-metric .metric-percent {
+	font-size: 10px;
+	vertical-align: super
+}
+
+.pie-chart-legend {
+	color: #3E576F;
+	font-size: 12px;
+	padding: 5px;
+	border: 1px solid #909090;
+	-webkit-border-radius: 5px;
+	-moz-border-radius: 5px;
+	border-radius: 5px
+}
+
+.pie-chart-legend .legend-swatch {
+	width: 17px;
+	height: 12px;
+	border: 1px solid #EEE;
+	-webkit-border-radius: 5px;
+	-moz-border-radius: 5px;
+	border-radius: 5px;
+	float: left;
+	margin: 0 3px 0 6px
+}
+
+.pie-chart-legend .legend-swatch.defined-sample-swatch {
+	background: #E0E0E0
+}
+
+.pie-chart-legend .legend-swatch.in-progress-sample-swatch {
+	background: #00a9e0
+}
+
+.pie-chart-legend .legend-swatch.completed-sample-swatch {
+	background: #8dc63f
+}
+
+.pie-chart-legend .legend-swatch.blocked-sample-swatch {
+	background: #EF3F35
+}
+
+.iteration-progress-dialog .carousel .carousel-panel .scroll-button span
+	{
+	width: 45px;
+	height: 50px;
+	line-height: 46px
+}
+
+.iteration-progress-dialog .carousel .carousel-panel .scroll-button span:hover
+	{
+	background-color: #e6e6e6;
+	color: #666
+}
+
+.iteration-progress-toggle-button-group {
+	margin-bottom: 5px
+}
+
+.x-gecko .stats-banner.collapsed .stat-panel .stat-metric {
+	line-height: 20px;
+	vertical-align: top
+}
+
+.x-gecko .stats-banner.collapsed .stat-panel .stat-metric .metric-percent
+	{
+	line-height: 10px
+}
+
+.x-gecko.x-mac .stats-banner.collapsed .stat-panel .stat-metric {
+	line-height: 22px
+}
+</style>
 </head>
 <body>
 </body>

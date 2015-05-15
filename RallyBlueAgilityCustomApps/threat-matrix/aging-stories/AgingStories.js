@@ -1,5 +1,6 @@
 Ext.define('AgingStories', {
         extend : 'Rally.app.App',
+        currentTimebox : null,
         mixins : [
             'Rally.Messageable'
         ],
@@ -9,6 +10,8 @@ Ext.define('AgingStories', {
             this.subscribe(this, 'timeboxReleaseChanged', this._releaseChanged, this);
             this.subscribe(this, 'timeboxIterationChanged', this._iterationChanged, this);
             app = this;
+            if (this.currentTimebox === null)
+                this.publish('requestTimebox', this);
         },
         _updateBoard : function()
         {
@@ -67,14 +70,26 @@ Ext.define('AgingStories', {
         },
         _releaseChanged : function(release)
         {
-            console.log("Aging stories: Got release changed message");
-            app.getContext().setTimeboxScope(release, 'release');
-            this._updateBoard();
+            if (this.currentTimebox === null || release.get('Name') != this.currentTimebox.get('Name'))
+            {
+                this.currentTimebox = release;
+                app.getContext().setTimeboxScope(release, 'release');
+                this._updateBoard();
+            } else
+            {
+                console.log("aging stories: Release change message, no change");
+            }
         },
         _iterationChanged : function(iteration)
         {
-            console.log("Aging stories: Got iteration changed message");
-            app.getContext().setTimeboxScope(iteration, 'iteration');
-            this._updateBoard();
-        }
+            if (this.currentTimebox === null || iteration.get('Name') != this.currentTimebox.get('Name'))
+            {
+                this.currentTimebox = iteration;
+                app.getContext().setTimeboxScope(iteration, 'iteration');
+                this._updateBoard();
+            } else
+            {
+                console.log("Visualization: iteration change message, no change");
+            }
+        },
 });

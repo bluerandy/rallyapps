@@ -1,11 +1,12 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Visualization Board</title>
+<title>Visualization Board</title>
 
-    <script type="text/javascript" src="https://rally1.rallydev.com/apps/2.0rc3/sdk.js"></script>
+<script type="text/javascript"
+	src="https://rally1.rallydev.com/apps/2.0rc3/sdk.js"></script>
 
-    <script type="text/javascript">
+<script type="text/javascript">
         Rally.onReady(function () {
                 (function(){var Ext=window.Ext4||window.Ext;Ext.define("Rally.ui.renderer.template.FormattedIDTemplate2",{override:"Rally.ui.renderer.template.FormattedIDTemplate",createIcon:function(data){if(this.showIcon===!1)return"";var className="";switch(data._type.toLowerCase().split("/")[0]){case"userstory":case"hierarchicalrequirement":className="story";break;case"defect":className="defect";break;case"task":className="task";break;case"testcase":className="test-case";break;case"defectsuite":className="defect-suite";break;case"testset":className="test-set";break;case"portfolioitem":className="portfolioitem"}return className?'<span class="artifact-icon icon-'+className+'"></span>':className}})})();
                 (function(){var Ext=window.Ext4||window.Ext,wsapiMaxPageSize=200;Ext.define("Rally.data.wsapi.TreeStore",{requires:["Deft.promise.Deferred","Rally.data.ModelFactory"],extend:"Ext.data.TreeStore",alias:"store.rallywsapitreestore",mixins:{messageable:"Rally.Messageable",findRecords:"Rally.data.WsapiFindRecords",recordUpdatable:"Rally.data.wsapi.RecordUpdatable",clientMetrics:"Rally.clientmetrics.ClientMetricsRecordable"},statics:{wsapiMaxPageSize:wsapiMaxPageSize,expandedCollectionNames:{hierarchicalrequirement:["Children","Defects","Tasks","TestCases"],defect:["Tasks","TestCases"],defectsuite:["Defects","Tasks"],testset:["Tasks","TestCases"]},childToParentTypeMap:{defect:["DefectSuite","Requirement"],hierarchicalrequirement:["Parent","PortfolioItem"],task:["WorkProduct"],testcase:["WorkProduct"]},parentChildTypeMap:{hierarchicalrequirement:[{typePath:"defect",collectionName:"Defects"},{typePath:"hierarchicalrequirement",collectionName:"Children"},{typePath:"task",collectionName:"Tasks"},{typePath:"testcase",collectionName:"TestCases"}],defect:[{typePath:"task",collectionName:"Tasks"},{typePath:"testcase",collectionName:"TestCases"}],defectsuite:[{typePath:"task",collectionName:"Tasks"},{typePath:"testcase",collectionName:"TestCases"}],testset:[{typePath:"task",collectionName:"Tasks"},{typePath:"testcase",collectionName:"TestCases",customTraversal:"TestSet"}]},isParentType:function(parentType){return _.has(this.parentChildTypeMap,parentType)},getChildModelTypePaths:function(parentTypes){return _.reduce(Ext.Array.from(parentTypes),function(childTypes,parentType){return _.union(childTypes,_.pluck(this.parentChildTypeMap[parentType],"typePath"))},[],this)}},currentPage:1,pageSize:25,context:void 0,wsapiVersion:void 0,nodeParam:void 0,model:void 0,parentTypes:[],fetch:void 0,enableHierarchy:!1,childLevelSorters:[],expandingNodesRespectProjectScoping:!0,_getModelFromTypePath:function(typePath){return this.modelTypePathMap||(this.modelTypePathMap=_.transform(this.models,function(r,m){r[m.typePath]=m},{},this)),this.modelTypePathMap[typePath]},constructor:function(config){this.callParent(arguments),0!==this.parentTypes.length&&this.model||Ext.Error.raise("You must configure the tree store with parentTypes and a model"),this.enableHierarchy&&(this.childLevelSorters=[{property:Rally.data.Ranker.getRankField(this.model),direction:"ASC"}]),this.fetch=this._buildFetch(this.fetch,this.model),this.addEvents("error","currentPageReset","parenttypeschange"),this._decorateModels(),this.on("beforeexpand",this.onBeforeExpandNode,this),this.on("load",function(){this.expandingNode=null},this)},onBeforeExpandNode:function(node,eOpts){this.expandingNode=node},isHierarchyEnabled:function(){return this.enableHierarchy===!0},setRootNode:function(root,preventLoad){this.tree.on("rootchange",this._decorateModels,this,{single:!0}),this.callParent([root,preventLoad||!this.autoLoad])},setParentTypes:function(parentTypes){this.parentTypes=_.map(Ext.Array.from(parentTypes),function(t){return t.toLowerCase()}),this.fireEvent("parenttypeschange",this.parentTypes)},remove:function(records){_.invoke(Ext.Array.from(records),"remove")},indexOf:function(record){return this.getRootNode().indexOf(record)},insert:function(index,records){_.each(Ext.Array.from(records),function(record){this.getRootNode().insertChild(index,record)},this)},getAllParentFieldTypes:function(){var parentFieldNames=[];this.enableHierarchy&&_.each(this.getChildTypes(),function(type){parentFieldNames=_.union(parentFieldNames,this.getParentFieldTypesByChildType(type.toLowerCase()))},this);var entp=this.getExpandingNodeTypePath().toLowerCase();return"hierarchicalrequirement"===entp&&(parentFieldNames=_.difference(parentFieldNames,["PortfolioItem"])),entp.indexOf("portfolioitem")>=0&&_.contains(this.getChildTypes(),"hierarchicalrequirement")&&(parentFieldNames=["PortfolioItem"]),parentFieldNames},getParentFieldTypesByChildType:function(childType){var model=this._getModelFromTypePath(childType);return _.filter(this.self.childToParentTypeMap[childType.toLowerCase()],function(field){return _.isFunction(this.model.getArtifactComponentModel)?this.model.getArtifactComponentModel(field)||model.hasField(field):model.hasField(field)},this)},getExpandingNodeTypePath:function(){var r=this.parentTypes[0];return this.expandingNode&&!this.isRootNode(this.expandingNode)&&(r=this.expandingNode.get("_type")),r.toLowerCase()},getChildTypes:function(){return this.enableHierarchy?this.expandingNode&&this.isRootNode(this.expandingNode)?this.parentTypes:this.self.getChildModelTypePaths(Ext.Array.from(this.getExpandingNodeTypePath())):[]},_getModelTypePaths:function(){return _.isFunction(this.model.getArtifactComponentModels)?_.pluck(this.model.getArtifactComponentModels(),"typePath"):[this.model.typePath]},isRootNode:function(node){return _.isEmpty(node)||isNaN(node.get("ObjectID"))},_getCollectionFetchNames:function(){var collectionFetchNames=[];return this.isRootNode(this.expandingNode)?_.each(Ext.Array.from(this.parentTypes),function(type){collectionFetchNames=_.union(collectionFetchNames,this.self.expandedCollectionNames[type.toLowerCase()])},this):_.each(Ext.Array.from(this.getChildTypes()),function(type){collectionFetchNames=_.union(collectionFetchNames,_.pluck(this.self.parentChildTypeMap[type],"collectionName"))},this),collectionFetchNames},_decorateModels:function(){_.isFunction(this.model.getArtifactComponentModels)&&_.each(this.model.getArtifactComponentModels(),Ext.data.NodeInterface.decorate,Ext.data.NodeInterface)},_errors:[],load:function(options){this.recordLoadBegin({description:"tree store load",component:this.requester}),this._hasErrors=!1,this.on("beforeload",function(store,operation){delete operation.id},this,{single:!0}),options=this._configureLoad(options);var deferred=Ext.create("Deft.Deferred"),originalCallback=options.callback,me=this;return options.callback=function(records,operation,success){me.dataLoaded=!0,Ext.callback(originalCallback,options.scope||me,arguments),options.callback=originalCallback,success?deferred.resolve(records,operation):deferred.reject(operation)},this.callParent([options]),deferred.promise},_configureLoad:function(options){if(options=options||{},Ext.isFunction(options)&&(options={callback:options}),this.isRootNode(options.node)?(this._configureProxy(!0),this._configureTopLevelLoad(options)):(this.enableHierarchy||Ext.Error.raise("You cannot load child nodes if hierarchy is not enabled."),this._configureProxy(!1),this._configureChildLoad(options)),options.useShallowFetch=!0,options.fetch=options.fetch||this._buildFetch(this.fetch,this.model),options.fetch=!0,this.expandingNodesRespectProjectScoping||this.isRootNode(this.expandingNode)||_.contains(this.parentTypes,this.getExpandingNodeTypePath())&&!this.expandingNode?options.context=this.context:(options.context=this.context,options.context||(options.context=Rally.getApp().getContext().getDataContext()),options.context.project=null),options.requester=this,options.clearOnLoad===!1){var clearOnLoad=this.clearOnLoad;this.clearOnLoad=!1,this.on("load",function(){this.clearOnLoad=clearOnLoad},this,{single:!0})}return options},_configureChildLoad:function(options){options.filters=this._getChildNodeFilters(options.node),options.sorters=this.childLevelSorters||[{property:Rally.data.Ranker.getRankField(this.model),direction:"ASC"}]},_configureTopLevelLoad:function(options){options.params=options.params||{},options.params.pagesize=this.pageSize,options.params.start=this.pageSize*(this.currentPage-1)},_getChildNodeFilters:function(node){var childItemTypes=this.self.parentChildTypeMap[node.get("_type")],customTraversal=[];return childItemTypes&&_.each(childItemTypes,function(childType){childType.hasOwnProperty("customTraversal")&&customTraversal.push(childType.customTraversal)}),[Rally.data.wsapi.Filter.or(_.map(_.union(this.getAllParentFieldTypes(),customTraversal),function(name){return{property:name,operator:"=",value:node.get("_ref")}}))]},filter:function(filters){this.filters.addAll(filters),this._resetCurrentPage(),this.load()},clearFilter:function(suppressEvent){this._resetCurrentPage(),this.filters.clear(),suppressEvent||this.load()},getAt:function(id){return this.getNodeById(id)},getTotalCount:function(){return this.totalCount},nextPage:function(){this._setCurrentPage(this.currentPage+1),this.load()},previousPage:function(){this._setCurrentPage(this.currentPage-1),this.load()},loadPage:function(pageNum){this._setCurrentPage(pageNum),this.load()},_setCurrentPage:function(pageNum){var maxPage=Math.ceil(this.getTotalCount()/this.pageSize);this.currentPage=Math.min(Math.max(pageNum,1),maxPage)},_resetCurrentPage:function(){this.dataLoaded===!0&&(this.fireEvent("currentpagereset"),this.currentPage=1)},_hasErrors:!1,hasErrors:function(){return this._hasErrors},onProxyLoad:function(operation){if(operation.error&&operation.error.errors&&operation.error.errors.length>0)this._hasErrors=!0,this.fireEvent("error",operation.error.errors);else{var resultSet=operation.getResultSet();if(resultSet&&(_.each(resultSet.records,this._instrumentRecord,this),this.isRootNode(operation.node)&&(this.totalCount=resultSet.total,this.totalCount>0&&0===resultSet.count&&this._attemptingToResetCurrentPage!==!0)))return this._attemptingToResetCurrentPage=!0,this._resetCurrentPage(),this.load(),void 0}if(this._attemptingToResetCurrentPage=!1,!(this.clearOnLoad||operation.node&&operation.node!==this.getRootNode())){var recordsById=_.indexBy(operation.getRecords(),function(record){return record.getId()});_.each(Ext.clone(operation.node.childNodes),function(childNode){var record=recordsById[childNode.getId()];if(record){if(record.get("VersionId")!==childNode.get("VersionId")){var newData=_(record.raw).keys().reduce(function(accum,key){return accum[key]=record.get(key),accum},{});childNode.set(newData),childNode.commit()}}else childNode.remove(!1)})}this.recordLoadEnd(),this.recordLoadBegin({description:"tree store after load callParent"}),this.callParent(arguments),_.each(operation.node.childNodes,function(node){node.childNodes=[],node.data.loaded=!1}),this.recordLoadEnd(),this.ownerTree&&this.ownerTree.fireEvent("afterproxyload")},each:function(fn,scope){this._treeWalkingEach(fn,this.tree.root,scope,!0)},_treeWalkingEach:function(fn,node,scope,ignoreNode){return _.each(node.childNodes,function(childNode){return this._treeWalkingEach(fn,childNode,scope)===!1?!1:void 0},this),ignoreNode!==!0?fn.call(scope||node,node):!0},getNodeById:function(id){return this.callParent(arguments)||this.findExactRecord(id)},findExactRecord:function(record){var recordId=Rally.util.Ref.getOidFromRef(record)||record;return this.getRootNode().findChild(this.model.prototype.idProperty,recordId,!0)},reloadRecord:function(record,options){options=options||{};var deferred=Ext.create("Deft.promise.Deferred"),operationConfig=Ext.merge({action:"read",limit:1,requester:this,context:this.context,filters:[{property:"ObjectID",value:record.getId()}],params:{}},options),modelToLoadFrom,recordTypePath;return _.isFunction(this.model.getArtifactComponentModels)?(recordTypePath=record.self.typePath,this.model.getArtifactComponentModel(recordTypePath.toLowerCase())?(modelToLoadFrom=this.model,operationConfig.params.types=recordTypePath):modelToLoadFrom=record.self):modelToLoadFrom=record.self,operationConfig.useShallowFetch=!0,operationConfig.fetch=this.fetch?_.union(this.fetch,_.pluck(modelToLoadFrom.getAssociationFields(),"name")):this._buildFetch(this.fetch,modelToLoadFrom),record.parentNode===this.getRootNode()&&(operationConfig.filters=operationConfig.filters.concat(this.filters.getRange())),modelToLoadFrom.getProxy().read(Ext.create("Ext.data.Operation",operationConfig),function(op){if(op.wasSuccessful()&&op.getRecords()&&op.getRecords().length){var record=op.getRecords()[0];this._instrumentRecord(record),Ext.callback(options.success,options.scope,[record]),deferred.resolve(record)}else Ext.callback(options.failure,options.scope,[op]),deferred.reject(op)},this),deferred.promise},doesRecordMatchStoreFilters:function(record){var deferred=Ext.create("Deft.promise.Deferred"),operation=new Ext.data.Operation({action:"read",fetch:!1,params:{query:""+Rally.data.wsapi.Filter.and(this.filters.getRange().concat([new Rally.data.wsapi.Filter({property:"ObjectID",operator:"=",value:Rally.util.Ref.getOidFromRef(record)})]))},limit:1,requester:this}),callback=function(operation){deferred.resolve(!_.isEmpty(operation.getRecords()))};return this.proxy.setExtraParam("types",this._getTypesForLevel(!0)),this.model.getProxy().read(operation,callback,this),deferred.promise},doesRecordMatchChildTypes:function(record){return _(this.getChildTypes()).invoke("toLowerCase").contains(record.self.typePath.toLowerCase())},_configureProxy:function(forTopLevel){this.proxy=this.model.getProxy();var types=_.isFunction(this.model.getArtifactComponentModels)?this._getTypesForLevel(forTopLevel):this.model.elementName;this.proxy.setExtraParam("types",types)},_getTypesForLevel:function(forTopLevel){var types;return types=forTopLevel?this.parentTypes.join(","):this.getChildTypes().join(",")},_instrumentRecord:function(record){var leafCount=this._getLeafCount(record),isLeaf=1>leafCount||!this.enableHierarchy;record.set("leaf",isLeaf),record.set("leafCount",leafCount)},_getLeafCount:function(record){var typePath=record.get("_type").toLowerCase(),expandedCollectionNames=Ext.Array.from(this.self.expandedCollectionNames[typePath]);return _.reduce(expandedCollectionNames,function(accumulator,collectionName){var collectionVal=record.get(collectionName);return collectionVal&&collectionVal.Count&&(accumulator+=collectionVal.Count),accumulator},0)},_buildFetch:function(fetch,model){return fetch===!0?fetch:(fetch||(fetch=_.pluck(model.getNonCollectionFields(),"name")),fetch=_.union(_.isArray(fetch)?fetch:fetch.split(","),["ObjectID","VersionId"]),this.enableHierarchy&&fetch!==!0&&(fetch=_.union(fetch,this._getCollectionFetchNames(),this.getAllParentFieldTypes())),_.filter(fetch,function(f){return void 0!==f}))},setFetch:function(fetch){this.fetch=this._buildFetch(fetch)}})})();
@@ -37,12 +38,332 @@
     </script>
 
 
-    <style type="text/css">
-        .stat-panel .collapsed-widget,.stat-panel .collapsed-widget>div{display:none}.stat-panel .expanded-widget,.stat-panel .expanded-widget>div{display:block}.stat-panel.collapsed .collapsed-widget,.stat-panel.collapsed .collapsed-widget>div{display:inline-block}.stat-panel.collapsed .expanded-widget,.stat-panel.collapsed .expanded-widget>div{display:none}.stats-banner .stat-panel{border-top:1px solid #d6d6d6;border-left:1px solid #d6d6d6;border-bottom:1px solid #d6d6d6;height:110px;text-align:center}.stats-banner .stat-panel:first-child{border-left:0}.stats-banner .stat-panel:last-child{border-left-width:2px}.stats-banner .stat-panel .stat-title{color:#222;font-family:ProximaNovaSemiBold,Helvetica,Arial;font-size:14px;padding-top:5px}.stats-banner .stat-panel .stat-metric{color:#666;font-family:ProximaNovaLight,Helvetica,Arial;font-size:18px;height:85px;padding-top:20px}.stats-banner .stat-panel .stat-metric .metric-percent{display:inline;font-size:12px;vertical-align:super}.stats-banner .stat-panel .stat-metric .metric-icon{color:#888;font-size:18px;padding-right:5px}.stats-banner .stat-panel .stat-metric .metric-chart{position:absolute;top:22px;width:100%}.stats-banner .stat-panel .stat-metric .metric-subtext{bottom:7px;color:#888;font-family:ProximaNova,Helvetica,Arial;font-size:11px;position:absolute;text-transform:lowercase;width:100%}.stats-banner .stat-panel .stat-metric .metric-chart-text{position:absolute;top:43px;width:100%}.stats-banner .stat-panel .stat-metric .metric-chart-text.percent-offset{left:3px;top:41px}.stats-banner .stat-panel .stat-metric .stat-secondary{color:#888;font-family:ProximaNova,Helvetica,Arial;font-size:11px;text-transform:lowercase}.stats-banner .stat-panel .stat-metric .stat-carousel{display:inline-block;font-family:ProximaNova,Helvetica,Arial;font-size:12px;margin-top:-20px}.stats-banner .stat-panel .stat-metric .stat-carousel .rally-carousel-pane .x-box-inner{top:0px !important}.stats-banner .stat-panel .stat-metric .stat-carousel .carousel>span{display:inline !important;width:auto !important}.stats-banner .stat-panel .stat-metric .stat-carousel .carousel>span>div{display:block !important}.stats-banner .stat-panel .stat-metric .stat-carousel .carousel .carousel-panel>span{display:inline !important;width:auto !important}.stats-banner .stat-panel .stat-metric .stat-carousel .carousel .carousel-panel>span>div{display:block !important}.stats-banner .stat-panel .chart .highcharts-container{cursor:pointer}.stats-banner .stat-panel .gauge .chart .highcharts-container{cursor:default}.stats-banner .stat-panel .header{display:none}.stats-banner .stat-panel.collapse-expand{background-color:#f6f6f6;width:23px}.stats-banner .stat-panel.collapse-expand .toggle-icon{color:#c0c0c0;font-size:18px;position:relative;right:1px}.stats-banner .stat-panel.collapse-expand:hover{cursor:pointer}.stats-banner .stat-panel.collapse-expand:hover .toggle-icon{color:#888}.stats-banner.collapsed .stat-panel{height:25px;padding-top:2px}.stats-banner.collapsed .stat-panel .metric-icon{color:#888;font-size:14px;padding-right:5px;vertical-align:middle}.stats-banner.collapsed .stat-panel .stat-title{color:#222;display:inline;font-family:ProximaNovaSemiBold,Helvetica,Arial;font-size:12px;vertical-align:middle}.stats-banner.collapsed .stat-panel .stat-metric{color:#888;display:inline;font-family:ProximaNova,Helvetica,Arial;font-size:14px;height:auto;padding-top:auto;padding-left:10px;vertical-align:middle}.stats-banner.collapsed .stat-panel .stat-metric .stat-metric-secondary{font-size:11px}.stats-banner.collapsed .stat-panel .stat-metric .metric-percent{font-size:10px;vertical-align:super}.pie-chart-legend{color:#3E576F;font-size:12px;padding:5px;border:1px solid #909090;-webkit-border-radius:5px;-moz-border-radius:5px;border-radius:5px}.pie-chart-legend .legend-swatch{width:17px;height:12px;border:1px solid #EEE;-webkit-border-radius:5px;-moz-border-radius:5px;border-radius:5px;float:left;margin:0 3px 0 6px}.pie-chart-legend .legend-swatch.defined-sample-swatch{background:#E0E0E0}.pie-chart-legend .legend-swatch.in-progress-sample-swatch{background:#00a9e0}.pie-chart-legend .legend-swatch.completed-sample-swatch{background:#8dc63f}.pie-chart-legend .legend-swatch.blocked-sample-swatch{background:#EF3F35}.iteration-progress-dialog .carousel .carousel-panel .scroll-button span{width:45px;height:50px;line-height:46px}.iteration-progress-dialog .carousel .carousel-panel .scroll-button span:hover{background-color:#e6e6e6;color:#666}.iteration-progress-toggle-button-group{margin-bottom:5px}.x-gecko .stats-banner.collapsed .stat-panel .stat-metric{line-height:20px;vertical-align:top}.x-gecko .stats-banner.collapsed .stat-panel .stat-metric .metric-percent{line-height:10px}.x-gecko.x-mac .stats-banner.collapsed .stat-panel .stat-metric{line-height:22px}
-    </style>
-    <style type="text/css">
-        .iterationtrackingboard{overflow-y:hidden}.iterationtrackingboard .header{line-height:normal;padding:5px 5px 2px 5px}.iterationtrackingboard .header .add-new{float:left}.iterationtrackingboard .header .add-new .new{margin-left:0}.iterationtrackingboard .header .rui-triggerfield{margin-bottom:5px}.iterationtrackingboard .blank-slate-msg .x-panel-body{clear:both;padding-top:20px;text-align:center}.iterationtrackingboard .gridboard-filter-control{height:22px;margin:3px 0px 0px 5px}.iterationtrackingboard .rui-leftright{margin-bottom:10px}.settings-no-grid{padding:10px}.icon-portfolioitem{speak:none;font-style:normal;font-weight:normal;font-variant:normal;text-transform:none;line-height:1;-webkit-font-smoothing:antialiased}.icon-portfolioitem:before{content:'\e024'}
-    </style>
+<style type="text/css">
+.stat-panel .collapsed-widget, .stat-panel .collapsed-widget>div {
+	display: none
+}
+
+.stat-panel .expanded-widget, .stat-panel .expanded-widget>div {
+	display: block
+}
+
+.stat-panel.collapsed .collapsed-widget, .stat-panel.collapsed .collapsed-widget>div
+	{
+	display: inline-block
+}
+
+.stat-panel.collapsed .expanded-widget, .stat-panel.collapsed .expanded-widget>div
+	{
+	display: none
+}
+
+.stats-banner .stat-panel {
+	border-top: 1px solid #d6d6d6;
+	border-left: 1px solid #d6d6d6;
+	border-bottom: 1px solid #d6d6d6;
+	height: 110px;
+	text-align: center
+}
+
+.stats-banner .stat-panel:first-child {
+	border-left: 0
+}
+
+.stats-banner .stat-panel:last-child {
+	border-left-width: 2px
+}
+
+.stats-banner .stat-panel .stat-title {
+	color: #222;
+	font-family: ProximaNovaSemiBold, Helvetica, Arial;
+	font-size: 14px;
+	padding-top: 5px
+}
+
+.stats-banner .stat-panel .stat-metric {
+	color: #666;
+	font-family: ProximaNovaLight, Helvetica, Arial;
+	font-size: 18px;
+	height: 85px;
+	padding-top: 20px
+}
+
+.stats-banner .stat-panel .stat-metric .metric-percent {
+	display: inline;
+	font-size: 12px;
+	vertical-align: super
+}
+
+.stats-banner .stat-panel .stat-metric .metric-icon {
+	color: #888;
+	font-size: 18px;
+	padding-right: 5px
+}
+
+.stats-banner .stat-panel .stat-metric .metric-chart {
+	position: absolute;
+	top: 22px;
+	width: 100%
+}
+
+.stats-banner .stat-panel .stat-metric .metric-subtext {
+	bottom: 7px;
+	color: #888;
+	font-family: ProximaNova, Helvetica, Arial;
+	font-size: 11px;
+	position: absolute;
+	text-transform: lowercase;
+	width: 100%
+}
+
+.stats-banner .stat-panel .stat-metric .metric-chart-text {
+	position: absolute;
+	top: 43px;
+	width: 100%
+}
+
+.stats-banner .stat-panel .stat-metric .metric-chart-text.percent-offset
+	{
+	left: 3px;
+	top: 41px
+}
+
+.stats-banner .stat-panel .stat-metric .stat-secondary {
+	color: #888;
+	font-family: ProximaNova, Helvetica, Arial;
+	font-size: 11px;
+	text-transform: lowercase
+}
+
+.stats-banner .stat-panel .stat-metric .stat-carousel {
+	display: inline-block;
+	font-family: ProximaNova, Helvetica, Arial;
+	font-size: 12px;
+	margin-top: -20px
+}
+
+.stats-banner .stat-panel .stat-metric .stat-carousel .rally-carousel-pane .x-box-inner
+	{
+	top: 0px !important
+}
+
+.stats-banner .stat-panel .stat-metric .stat-carousel .carousel>span {
+	display: inline !important;
+	width: auto !important
+}
+
+.stats-banner .stat-panel .stat-metric .stat-carousel .carousel>span>div
+	{
+	display: block !important
+}
+
+.stats-banner .stat-panel .stat-metric .stat-carousel .carousel .carousel-panel>span
+	{
+	display: inline !important;
+	width: auto !important
+}
+
+.stats-banner .stat-panel .stat-metric .stat-carousel .carousel .carousel-panel>span>div
+	{
+	display: block !important
+}
+
+.stats-banner .stat-panel .chart .highcharts-container {
+	cursor: pointer
+}
+
+.stats-banner .stat-panel .gauge .chart .highcharts-container {
+	cursor: default
+}
+
+.stats-banner .stat-panel .header {
+	display: none
+}
+
+.stats-banner .stat-panel.collapse-expand {
+	background-color: #f6f6f6;
+	width: 23px
+}
+
+.stats-banner .stat-panel.collapse-expand .toggle-icon {
+	color: #c0c0c0;
+	font-size: 18px;
+	position: relative;
+	right: 1px
+}
+
+.stats-banner .stat-panel.collapse-expand:hover {
+	cursor: pointer
+}
+
+.stats-banner .stat-panel.collapse-expand:hover .toggle-icon {
+	color: #888
+}
+
+.stats-banner.collapsed .stat-panel {
+	height: 25px;
+	padding-top: 2px
+}
+
+.stats-banner.collapsed .stat-panel .metric-icon {
+	color: #888;
+	font-size: 14px;
+	padding-right: 5px;
+	vertical-align: middle
+}
+
+.stats-banner.collapsed .stat-panel .stat-title {
+	color: #222;
+	display: inline;
+	font-family: ProximaNovaSemiBold, Helvetica, Arial;
+	font-size: 12px;
+	vertical-align: middle
+}
+
+.stats-banner.collapsed .stat-panel .stat-metric {
+	color: #888;
+	display: inline;
+	font-family: ProximaNova, Helvetica, Arial;
+	font-size: 14px;
+	height: auto;
+	padding-top: auto;
+	padding-left: 10px;
+	vertical-align: middle
+}
+
+.stats-banner.collapsed .stat-panel .stat-metric .stat-metric-secondary
+	{
+	font-size: 11px
+}
+
+.stats-banner.collapsed .stat-panel .stat-metric .metric-percent {
+	font-size: 10px;
+	vertical-align: super
+}
+
+.pie-chart-legend {
+	color: #3E576F;
+	font-size: 12px;
+	padding: 5px;
+	border: 1px solid #909090;
+	-webkit-border-radius: 5px;
+	-moz-border-radius: 5px;
+	border-radius: 5px
+}
+
+.pie-chart-legend .legend-swatch {
+	width: 17px;
+	height: 12px;
+	border: 1px solid #EEE;
+	-webkit-border-radius: 5px;
+	-moz-border-radius: 5px;
+	border-radius: 5px;
+	float: left;
+	margin: 0 3px 0 6px
+}
+
+.pie-chart-legend .legend-swatch.defined-sample-swatch {
+	background: #E0E0E0
+}
+
+.pie-chart-legend .legend-swatch.in-progress-sample-swatch {
+	background: #00a9e0
+}
+
+.pie-chart-legend .legend-swatch.completed-sample-swatch {
+	background: #8dc63f
+}
+
+.pie-chart-legend .legend-swatch.blocked-sample-swatch {
+	background: #EF3F35
+}
+
+.iteration-progress-dialog .carousel .carousel-panel .scroll-button span
+	{
+	width: 45px;
+	height: 50px;
+	line-height: 46px
+}
+
+.iteration-progress-dialog .carousel .carousel-panel .scroll-button span:hover
+	{
+	background-color: #e6e6e6;
+	color: #666
+}
+
+.iteration-progress-toggle-button-group {
+	margin-bottom: 5px
+}
+
+.x-gecko .stats-banner.collapsed .stat-panel .stat-metric {
+	line-height: 20px;
+	vertical-align: top
+}
+
+.x-gecko .stats-banner.collapsed .stat-panel .stat-metric .metric-percent
+	{
+	line-height: 10px
+}
+
+.x-gecko.x-mac .stats-banner.collapsed .stat-panel .stat-metric {
+	line-height: 22px
+}
+</style>
+<style type="text/css">
+.iterationtrackingboard {
+	overflow-y: hidden
+}
+
+.iterationtrackingboard .header {
+	line-height: normal;
+	padding: 5px 5px 2px 5px
+}
+
+.iterationtrackingboard .header .add-new {
+	float: left
+}
+
+.iterationtrackingboard .header .add-new .new {
+	margin-left: 0
+}
+
+.iterationtrackingboard .header .rui-triggerfield {
+	margin-bottom: 5px
+}
+
+.iterationtrackingboard .blank-slate-msg .x-panel-body {
+	clear: both;
+	padding-top: 20px;
+	text-align: center
+}
+
+.iterationtrackingboard .gridboard-filter-control {
+	height: 22px;
+	margin: 3px 0px 0px 5px
+}
+
+.iterationtrackingboard .rui-leftright {
+	margin-bottom: 10px
+}
+
+.settings-no-grid {
+	padding: 10px
+}
+
+.icon-portfolioitem {
+	speak: none;
+	font-style: normal;
+	font-weight: normal;
+	font-variant: normal;
+	text-transform: none;
+	line-height: 1;
+	-webkit-font-smoothing: antialiased
+}
+
+.icon-portfolioitem:before {
+	content: '\e024'
+}
+</style>
 </head>
 <body>
 </body>

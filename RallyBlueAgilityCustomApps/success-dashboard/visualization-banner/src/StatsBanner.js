@@ -21,7 +21,7 @@ Ext.define('Rally.apps.releasetracking.StatsBanner', {
         width : '100%',
         stateful : true,
         config : {
-                context : null,
+                context : this.getContext(),
                 expanded : true
         },
         items : [
@@ -40,11 +40,13 @@ Ext.define('Rally.apps.releasetracking.StatsBanner', {
         ],
         constructor : function()
         {
+            console.log('banner constructor');
             this.stateId = Rally.environment.getContext().getScopedStateId('stats-banner');
             this.callParent(arguments);
         },
         initComponent : function()
         {
+            console.log('banner init');
             this.subscribe(this, Rally.Message.objectDestroy, this._update, this);
             this.subscribe(this, Rally.Message.objectCreate, this._update, this);
             this.subscribe(this, Rally.Message.objectUpdate, this._update, this);
@@ -73,16 +75,18 @@ Ext.define('Rally.apps.releasetracking.StatsBanner', {
                     ],
                     useShallowFetch : true,
                     filters : [
-                        this.context.getTimeboxScope().getQueryFilter()
+                        this.getContext().getTimeboxScope().getQueryFilter()
                     ],
-                    context : this.context.getDataContext(),
+                    context : this.context,
                     limit : Infinity,
                     requester : this
             });
+            console.log('banner created store');
             this.items = this._configureItems(this.items);
             this.on('expand', this._onExpand, this);
             this.on('collapse', this._onCollapse, this);
             this.callParent(arguments);
+            console.log('banner updating');
             this._update();
         },
         onRender : function()
@@ -153,6 +157,7 @@ Ext.define('Rally.apps.releasetracking.StatsBanner', {
         },
         _hasTimebox : function()
         {
+            console.log('timebox check: ', this.context.getTimeboxScope());
             return !!this.context.getTimeboxScope().getRecord();
         },
         _configureItems : function(items)
@@ -167,6 +172,7 @@ Ext.define('Rally.apps.releasetracking.StatsBanner', {
         {
             if (this._hasTimebox())
             {
+                console.log('has timebox, loading');
                 this.store.load();
             }
         }

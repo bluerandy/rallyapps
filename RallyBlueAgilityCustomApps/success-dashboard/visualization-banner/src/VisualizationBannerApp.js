@@ -58,7 +58,7 @@ Ext.define('Rally.apps.releasetracking.VisualizationBannerApp', {
             {
                 console.log("visual iteration: setting timebox");
                 this.currentTimebox = iteration;
-                this.getContext().setTimeboxScope(iteration, 'iteration');
+                // this.getContext().setTimeboxScope(iteration, 'iteration');
                 this._updateStatsBanner();
             } else
             {
