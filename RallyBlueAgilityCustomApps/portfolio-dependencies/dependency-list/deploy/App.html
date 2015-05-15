@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Portfolio Item Dependencies</title>
+    <title>Portfolio Item Dependencies</title>
 
-<script type="text/javascript" src="/apps/2.0rc3/sdk.js"></script>
+    <script type="text/javascript" src="/apps/2.0rc3/sdk.js"></script>
 
-<script type="text/javascript">
+    <script type="text/javascript">
         Rally.onReady(function () {
-                Ext.define("DependencyList",{extend:"Rally.app.App",requires:["Rally.ui.gridboard.plugin.GridBoardFieldPicker"],uses:["Ext.ux.exporter.Exporter"],componentCls:"app",launch:function(){var dependencyFilter=Ext.create("Rally.data.wsapi.Filter",{property:"c_DependencyLevel",operator:"=",value:"Critical"}),app=this;this._myGrid=this.add({xtype:"rallygrid",enableBulkEdit:!0,height:600,columnCfgs:["FormattedID","Name","State","c_DependencyDescription","c_BusinessLead"],context:this.getContext(),storeConfig:{models:["portfolioitem"],sorters:{property:"Rank",direction:"DESC"},filters:dependencyFilter}})},_updateGrid:function(myStore){console.log("Updating Grid"),this._myGrid.reconfigure(myStore)},onTimeboxScopeChange:function(newTimeboxScope){var newFilter=newTimeboxScope.getQueryFilter(),store=this._myGrid.getStore();store.clearFilter(!0),store.filter(newFilter),this._updateGrid(store)}});
+                Ext.define("DependencyList",{extend:"Rally.app.App",requires:["Rally.ui.gridboard.plugin.GridBoardFieldPicker"],uses:["Ext.ux.exporter.Exporter"],componentCls:"app",launch:function(){var dependencyFilter=Ext.create("Rally.data.wsapi.Filter",{property:"c_DependencyDescription",operator:"contains",value:"a"}),app=this;this._myGrid=this.add({xtype:"rallygrid",enableBulkEdit:!0,height:600,columnCfgs:[{dataIndex:"FormattedID",width:60},"Name","State",{dataIndex:"c_DependencyDescription",width:250},"PlannedStartDate","PlannedEndDate","c_BusinessLead"],context:this.getContext(),storeConfig:{models:["portfolioitem"],sorters:{property:"Rank",direction:"DESC"},filters:dependencyFilter}})},_updateGrid:function(myStore){console.log("Updating Grid"),this._myGrid.reconfigure(myStore)},onTimeboxScopeChange:function(newTimeboxScope){var newFilter=newTimeboxScope.getQueryFilter(),store=this._myGrid.getStore();store.clearFilter(!0),store.filter(newFilter),this._updateGrid(store)}});
                 Ext.define("GridExporter",{dateFormat:"Y-m-d g:i",exportGrid:function(grid){if(Ext.isIE)this._ieToExcel(grid);else{var data=this._getCSV(grid);window.location="data:text/csv;charset=utf8,"+encodeURIComponent(data)}},_escapeForCSV:function(string){return string.match(/,/)&&(string=string.match(/"/)?string.replace(/,/g,""):'"'+string+'"'),string},_getFieldText:function(fieldData){var text;return text=null===fieldData||void 0===fieldData?"":fieldData._refObjectName&&!fieldData.getMonth?fieldData._refObjectName:fieldData instanceof Date?Ext.Date.format(fieldData,this.dateFormat):fieldData.match?fieldData:""},_getFieldTextAndEscape:function(fieldData){var string=this._getFieldText(fieldData);return this._escapeForCSV(string)},_getCSV:function(grid){var cols=grid.columns,store=grid.store,data="",that=this;return Ext.Array.each(cols,function(col,index){col.hidden!==!0&&(data+=that._getFieldTextAndEscape(col.text)+",")}),data+="\n",store.each(function(record){var entry=record.getData();Ext.Array.each(cols,function(col,index){if(col.hidden!==!0){var fieldName=col.dataIndex,text=entry[fieldName];data+=that._getFieldTextAndEscape(text)+","}}),data+="\n"}),data},_ieGetGridData:function(grid,sheet){var that=this,resourceItems=grid.store.data.items,cols=grid.columns;Ext.Array.each(cols,function(col,colIndex){col.hidden!==!0&&(console.log("header: ",col.text),sheet.cells(1,colIndex+1).value=col.text)});var rowIndex=2;grid.store.each(function(record){var entry=record.getData();Ext.Array.each(cols,function(col,colIndex){if(col.hidden!==!0){var fieldName=col.dataIndex,text=entry[fieldName],value=that._getFieldText(text);sheet.cells(rowIndex,colIndex+1).value=value}}),rowIndex++})},_ieToExcel:function(grid){if(window.ActiveXObject){var xlApp,xlBook;try{xlApp=new ActiveXObject("Excel.Application"),xlBook=xlApp.Workbooks.Add()}catch(e){return Ext.Msg.alert("Error",'For the export to work in IE, you have to enable a security setting called "Initialize and script ActiveX control not marked as safe" from Internet Options -> Security -> Custom level..."'),void 0}xlBook.worksheets("Sheet1").activate();var XlSheet=xlBook.activeSheet;xlApp.visible=!0,this._ieGetGridData(grid,XlSheet),XlSheet.columns.autofit()}}});
 
             Rally.launchApp('DependencyList', {
@@ -19,8 +19,9 @@
     </script>
 
 
-<style type="text/css">
-</style>
+    <style type="text/css">
+        
+    </style>
 </head>
 <body>
 </body>

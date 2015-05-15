@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Story Hierarchy</title>
+
+
+    <script type="text/javascript" src="https://rally1.rallydev.com/apps/2.0/sdk-debug.js"></script>
+
+    <script type="text/javascript">
+        Rally.loadScripts(
+                [
+                      "StoryHierarchyApp.js",
+                ],
+        function() {
+            Rally.launchApp('Rally.apps.storyhierarchy.StoryHierarchyApp', {
+                name:"Story Hierarchy"
+            });
+        }, true);
+    </script>
+
+
+    <link rel="stylesheet" type="text/css" href="StoryHierarchyApp.css"/>
+</head>
+<body>
+</body>
+</html>

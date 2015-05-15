@@ -25,11 +25,18 @@ Ext.define('wip-limits', {
         _onStoriesLoaded : function(store, stories)
         {
             var me = this;
+            var states = [
+                            'Backlog',
+                            'Defined',
+                            'In-Progress',
+                            'Completed',
+                            'Accepted'
+            ];
             var projectGroup = _.groupBy(stories, function(t)
             {
                 return t.get("Project") ? t.get("Project")._refObjectName : "none";
             });
-            var summaries = _.map(_.keys(projectGroup), function(project)
+            me.summaries = _.map(_.keys(projectGroup), function(project)
             {
                 var stories = projectGroup[project];
                 this.currentProject = project;
@@ -38,53 +45,43 @@ Ext.define('wip-limits', {
                     return story.get('ScheduleState');
                 });
                 var values = {};
-                var states = [
-                                'Backlog',
-                                'Defined',
-                                'In-Progress',
-                                'Completed',
-                                'Accepted'
-                ];
                 _.each(states, function(state)
                 {
                     values[state] = _.isUndefined(counts[state]) ? 0 : counts[state];
-                    console.log("Getting wip: ", project, state);
-                    var wip = this._getWipLimit(project, state);
                     var wipKey = state + 'WIP';
-                    if (wip !== null && wip !== undefined)
-                    {
-                        console.log("wipKey: " + wipKey, "wip: ", wip);
-                        values[wipKey] = wip;
-                    } else
-                    {
-                        values[wipKey] = 0;
-                    }
-                }, me);
+                    values[wipKey] = 0;
+                });
                 values.project = this.currentProject;
                 return values;
             }, this);
-            var newStore = Ext.create('Rally.data.custom.Store', {
-                    data : summaries,
+            me.newStore = Ext.create('Rally.data.custom.Store', {
+                    data : me.summaries,
                     sorters : {
                             property : 'project',
                             direction : 'ASC'
                     }
             });
-            newStore.addListener('update', function(store, record, op, fieldNames, eOpts)
+            _.each(me.summaries, function(row)
+            {
+                _.each(states, function(state)
+                {
+                    var wipKey = state + 'WIP';
+                    me._getWipLimit(row.project, wipKey);
+                });
+            });
+            me.newStore.addListener('update', function(store, record, op, fieldNames, eOpts)
             {
                 if (op == 'edit')
                 {
-                    console.log("rec:", op, record, fieldNames);
                     var project = record.get('project');
                     var fieldName = _.first(fieldNames);
                     var value = record.get(fieldName);
-                    console.log("Writing project: " + project + "  field: " + fieldName + "  value: " + value);
                     me._setWipLimit(project, fieldName, value);
                 }
             }, store, {
-                single : true
+            // single: true
             });
-            this._displayGrid(newStore);
+            this._displayGrid(me.newStore);
         },
         _displayGrid : function(store)
         {
@@ -173,15 +170,13 @@ Ext.define('wip-limits', {
             var key = this._getWipKey(project, state);
             var settings = {};
             settings[key] = Ext.JSON.encode(limit);
-            console.log("Setting wip limit of " + limit + " for project: " + project, settings);
+            var workspace = this.getContext().getWorkspace();
             Rally.data.PreferenceManager.update({
-                    workspace : this.getContext().getWorkspace(),
-                    settings : settings,
-                    scope : this
+                    workspace : workspace,
+                    settings : settings
             }).then({
                     success : function(updatedRecords, notUpdatedRecord, options)
                     {
-                        console.log('preference update success', updatedRecords, notUpdatedRecord, options);
                     },
                     failure : function()
                     {
@@ -195,19 +190,24 @@ Ext.define('wip-limits', {
         },
         _getWipLimit : function(project, state)
         {
-            console.log("Getting wip limit for project: " + project);
+            var me = this;
             var key = this._getWipKey(project, state);
+            var workspace = this.getContext().getWorkspace();
+            console.log('workspace: ', workspace);
             Rally.data.PreferenceManager.load({
-                    workspace : this.getContext().getWorkspace(),
-                    filterByName : key
-            }).then({
+                    workspace : workspace,
+                    filterByName : key,
                     success : function(prefs)
                     {
-                        console.log("prefs:", prefs, "prefs[key]: ", prefs[key]);
                         if (prefs && prefs[key])
                         {
-                            var values = Ext.JSON.decode(prefs[key]);
-                            return values;
+                            var value = prefs[key];
+                            var row = _.find(me.summaries, function(r)
+                            {
+                                return r.project === project;
+                            });
+                            row[state] = Ext.JSON.decode(value);
+                            me.newStore.load();
                         }
                     },
                     failure : function()

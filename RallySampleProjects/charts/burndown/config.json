@@ -14,7 +14,6 @@
       "BurnDownSettings.js",
       "BurnDownChart.js",
       "BurnDownApp.js",
-      "BurnDownCalculator.js",
       "ReleaseBurnDownApp.js"
    ],
    "css": [

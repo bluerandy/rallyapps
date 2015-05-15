@@ -1,5 +1,6 @@
 Ext.define('MyWorkQueue', {
         extend : 'Rally.app.App',
+        currentTimebox : null,
         mixins : [
             'Rally.Messageable'
         ],

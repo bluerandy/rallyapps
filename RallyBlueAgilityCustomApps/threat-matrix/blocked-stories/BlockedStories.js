@@ -1,5 +1,6 @@
 Ext.define('BlockedStories', {
         extend : 'Rally.app.App',
+        currentTimebox : null,
         mixins : [
             'Rally.Messageable'
         ],

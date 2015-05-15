@@ -1,6 +1,7 @@
 var app = null;
 Ext.define('ProgramRisks', {
         extend : 'Rally.app.App',
+        currentTimebox : null,
         requires : [
             'Rally.ui.gridboard.plugin.GridBoardFieldPicker'
         ],
@@ -13,6 +14,8 @@ Ext.define('ProgramRisks', {
             this.subscribe(this, 'timeboxReleaseChanged', this._releaseChanged, this);
             this.subscribe(this, 'timeboxIterationChanged', this._iterationChanged, this);
             app = this;
+            if (this.currentTimebox === null)
+                this.publish('requestTimebox', this);
         },
         _updateBoard : function(timeboxFilter)
         {

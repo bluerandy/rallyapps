@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Visibility Dashboard</title>
+    <title>Visibility Dashboard</title>
 
-<script type="text/javascript" src="/apps/2.0rc3/sdk.js"></script>
+    <script type="text/javascript" src="/apps/2.0rc3/sdk.js"></script>
 
-<script type="text/javascript">
+    <script type="text/javascript">
         Rally.onReady(function () {
                 (function(){var Ext=window.Ext4||window.Ext;Ext.define("Rally.ui.renderer.template.FormattedIDTemplate2",{override:"Rally.ui.renderer.template.FormattedIDTemplate",createIcon:function(data){if(this.showIcon===!1)return"";var className="";switch(data._type.toLowerCase().split("/")[0]){case"userstory":case"hierarchicalrequirement":className="story";break;case"defect":className="defect";break;case"task":className="task";break;case"testcase":className="test-case";break;case"defectsuite":className="defect-suite";break;case"testset":className="test-set";break;case"portfolioitem":className="portfolioitem"}return className?'<span class="artifact-icon icon-'+className+'"></span>':className}})})();
                 (function(){var Ext=window.Ext4||window.Ext;Ext.define("Rally.ui.gridboard.plugin.GridBoardPortfolioItemTypeChooser",{alias:"plugin.rallygridboardportfolioitemtypechooser",extend:"Ext.AbstractPlugin",mixins:["Rally.ui.gridboard.plugin.GridBoardControlShowable","Ext.util.Observable"],init:function(cmp){this.cmp=cmp,this.showControl()},getControlCmpConfig:function(){var me=this;return{xtype:"rallyportfolioitemtypecombobox",listeners:{scope:me,change:function(t,newVal,oldVal,eOpts){this._changeTopLevelPI(t.store.getAt(t.store.find("_ref",newVal)))}}}},_changeTopLevelPI:function(typeRec){var gridOrBoard=this.cmp.getGridOrBoard(),type=typeRec.get("TypePath");"grid"===this.cmp.getToggleState()&&gridOrBoard.store.setParentTypes([type])}})})();
@@ -22,21 +22,9 @@
     </script>
 
 
-<style type="text/css">
-.icon-portfolioitem {
-	speak: none;
-	font-style: normal;
-	font-weight: normal;
-	font-variant: normal;
-	text-transform: none;
-	line-height: 1;
-	-webkit-font-smoothing: antialiased
-}
-
-.icon-portfolioitem:before {
-	content: '\e024'
-}
-</style>
+    <style type="text/css">
+        .icon-portfolioitem{speak:none;font-style:normal;font-weight:normal;font-variant:normal;text-transform:none;line-height:1;-webkit-font-smoothing:antialiased}.icon-portfolioitem:before{content:'\e024'}
+    </style>
 </head>
 <body>
 </body>
