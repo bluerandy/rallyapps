@@ -9,6 +9,8 @@ Ext.define('MyWorkQueue', {
             this.subscribe(this, 'timeboxReleaseChanged', this._releaseChanged, this);
             this.subscribe(this, 'timeboxIterationChanged', this._iterationChanged, this);
             var me = this;
+            if (this.currentTimebox === null)
+                this.publish('requestTimebox', this);
         },
         _updateBoard : function(portfolioTimeboxFilter, storyTimeboxFilter)
         {
@@ -145,42 +147,50 @@ Ext.define('MyWorkQueue', {
         },
         _releaseChanged : function(release)
         {
-            var releaseStartFilter = Ext.create('Rally.data.wsapi.Filter', {
-                    property : 'PlannedEndDate',
-                    operator : '>=',
-                    value : Rally.util.DateTime.toIsoString(release.get('ReleaseStartDate'))
-            });
-            var releaseEndFilter = Ext.create('Rally.data.wsapi.Filter', {
-                    property : 'PlannedEndDate',
-                    operator : '<=',
-                    value : Rally.util.DateTime.toIsoString(release.get('ReleaseDate'))
-            });
-            var portfolioTimeboxFilter = releaseEndFilter.and(releaseStartFilter);
-            var storyFilter = Ext.create('Rally.data.wsapi.Filter', {
-                    property : 'Release.Name',
-                    value : release.get('Name')
-            });
-            this.getContext().setTimeboxScope(release, 'release');
-            this._updateBoard(portfolioTimeboxFilter, storyFilter);
+            if (this.currentTimebox === null || release.get('Name') != this.currentTimebox.get('Name'))
+            {
+                this.currentTimebox = release;
+                var releaseStartFilter = Ext.create('Rally.data.wsapi.Filter', {
+                        property : 'PlannedEndDate',
+                        operator : '>=',
+                        value : Rally.util.DateTime.toIsoString(release.get('ReleaseStartDate'))
+                });
+                var releaseEndFilter = Ext.create('Rally.data.wsapi.Filter', {
+                        property : 'PlannedEndDate',
+                        operator : '<=',
+                        value : Rally.util.DateTime.toIsoString(release.get('ReleaseDate'))
+                });
+                var portfolioTimeboxFilter = releaseEndFilter.and(releaseStartFilter);
+                var storyFilter = Ext.create('Rally.data.wsapi.Filter', {
+                        property : 'Release.Name',
+                        value : release.get('Name')
+                });
+                this.getContext().setTimeboxScope(release, 'release');
+                this._updateBoard(portfolioTimeboxFilter, storyFilter);
+            }
         },
         _iterationChanged : function(iteration)
         {
-            var iterationStartFilter = Ext.create('Rally.data.wsapi.Filter', {
-                    property : 'PlannedEndDate',
-                    operator : '>=',
-                    value : Rally.util.DateTime.toIsoString(iteration.get('StartDate'))
-            });
-            var iterationEndFilter = Ext.create('Rally.data.wsapi.Filter', {
-                    property : 'PlannedEndDate',
-                    operator : '<=',
-                    value : Rally.util.DateTime.toIsoString(iteration.get('EndDate'))
-            });
-            var portfolioTimeboxFilter = iterationStartFilter.and(iterationEndFilter);
-            var storyFilter = Ext.create('Rally.data.wsapi.Filter', {
-                    property : 'Iteration.Name',
-                    value : iteration.get('Name')
-            });
-            this.getContext().setTimeboxScope(iteration, 'iteration');
-            this._updateBoard(portfolioTimeboxFilter, storyFilter);
+            if (this.currentTimebox === null || iteration.get('Name') != this.currentTimebox.get('Name'))
+            {
+                this.currentTimebox = iteration;
+                var iterationStartFilter = Ext.create('Rally.data.wsapi.Filter', {
+                        property : 'PlannedEndDate',
+                        operator : '>=',
+                        value : Rally.util.DateTime.toIsoString(iteration.get('StartDate'))
+                });
+                var iterationEndFilter = Ext.create('Rally.data.wsapi.Filter', {
+                        property : 'PlannedEndDate',
+                        operator : '<=',
+                        value : Rally.util.DateTime.toIsoString(iteration.get('EndDate'))
+                });
+                var portfolioTimeboxFilter = iterationStartFilter.and(iterationEndFilter);
+                var storyFilter = Ext.create('Rally.data.wsapi.Filter', {
+                        property : 'Iteration.Name',
+                        value : iteration.get('Name')
+                });
+                this.getContext().setTimeboxScope(iteration, 'iteration');
+                this._updateBoard(portfolioTimeboxFilter, storyFilter);
+            }
         }
 });

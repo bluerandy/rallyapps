@@ -3,35 +3,36 @@
 <head>
 <title>Visualization Board</title>
 
+<!--[if IE]>
+<script type="text/javascript" src="//rally1.rallydev.com/apps/2.0rc3/sdk.js"></script>
+<![endif]-->
+<![if !IE]>
 <script type="text/javascript" src="/apps/2.0rc3/sdk.js"></script>
+<![endif]>
+
 
 <script type="text/javascript">
         Rally.onReady(function () {
                 Ext.define('rally.app.timebox-selector', {
-        extend : 'Ext.Container',
-        currentTimebox : null,
+        extend : 'Rally.app.App',
+        alias : 'widget.timebox-selector',
         componentCls : 'app',
-        alias : 'rally.app.timebox-selector',
-        cls : 'rally.app.timebox-selector',
+        currentTimebox : null,
         layout : 'hbox',
         width : '100%',
         mixins : [
             'Rally.Messageable'
         ],
-        constructor : function()
+        launch : function()
         {
-            console.log("timebox constructor");
+            console.log("timebox launch");
             this.stateId = Rally.environment.getContext().getScopedStateId('timebox-filter');
-        },
-        initComponent : function()
-        {
-            console.log("timebox init");
-            this.callParent(arguments);
             this._createReleaseCombo();
             this.subscribe(this, 'requestTimebox', this._requestTimebox, this);
         },
-        _requestTimebox : function()
+        _requestTimebox : function(source)
         {
+            console.log('Got request timebox message', source);
             if (this.currentTimebox !== null)
             {
                 if (this.currentTimebox.get('ReleaseDate'))
@@ -45,6 +46,7 @@
         },
         _createReleaseCombo : function()
         {
+            var that = this;
             console.log("Creating release combo...");
             this._releaseCombo = this.add({
                     xtype : 'rallyreleasecombobox',
@@ -66,15 +68,17 @@
                             change : function(t, newVal, oldVal, eOpts)
                             {
                                 var release = t.getRecord();
+                                this.currentTimebox = release;
                                 this.publish('timeboxReleaseChanged', release);
                                 this._updateIterationCombo(release);
                             },
-                            scope : this
+                            scope : that
                     }
             });
         },
         _updateIterationCombo : function(release)
         {
+            var that = this;
             console.log("Creating iteration combo...");
             this.remove('globaliterationpicker');
             var endFilter = Ext.create('Rally.data.wsapi.Filter', {
@@ -88,7 +92,6 @@
                     value : Rally.util.DateTime.toIsoString(release.get('ReleaseStartDate'))
             });
             var filters = endFilter.and(startFilter);
-            console.log("Filters: ", filters);
             this._iterationCombo = this.add({
                     xtype : 'rallyiterationcombobox',
                     itemId : 'globaliterationpicker',
@@ -120,9 +123,10 @@
                             change : function(t, newVal, oldVal, eOpts)
                             {
                                 var iteration = t.getRecord();
+                                this.currentTimebox = iteration;
                                 this.publish('timeboxIterationChanged', iteration);
                             },
-                            scope : this
+                            scope : that
                     }
             });
         }
@@ -2295,6 +2299,7 @@ Ext
 
                 Ext.define('Rally.apps.releasetracking.VisualizationBannerApp', {
         extend : 'Rally.app.TimeboxScopedApp',
+        currentTimebox : null,
         requires : [
                         'Rally.data.wsapi.TreeStoreBuilder',
                         'Rally.ui.cardboard.plugin.FixedHeader',
@@ -2324,15 +2329,37 @@ Ext
                     xtype : 'timebox-selector',
                     context : this.getContext()
             });
+            if (this.currentTimebox === null)
+                this.publish('timeboxRequest', this);
         },
         _releaseChanged : function(release)
         {
-            this.getContext().setTimeboxScope(release, 'release');
-            this._updateStatsBanner();
+            console.log("Visualization banner: Got release changed message: ", release);
+            if (this.currentTimebox === null || release.get('Name') != this.currentTimebox.get('Name'))
+            {
+                console.log("visual release: setting timebox");
+                this.currentTimebox = release;
+                console.log("visual release: setting context timebox");
+                this.getContext().setTimeboxScope(release, 'release');
+                this._updateStatsBanner();
+            } else
+            {
+                console.log("Visualization: Release change message, no change");
+            }
         },
         _iterationChanged : function(iteration)
         {
-            this._updateStatsBanner();
+            console.log("Visualization banner: Got iteration changed message: ", iteration);
+            if (this.currentTimebox === null || iteration.get('Name') != this.currentTimebox.get('Name'))
+            {
+                console.log("visual iteration: setting timebox");
+                this.currentTimebox = iteration;
+                // this.getContext().setTimeboxScope(iteration, 'iteration');
+                this._updateStatsBanner();
+            } else
+            {
+                console.log("Visualization: iteration change message, no change");
+            }
         },
         _updateStatsBanner : function()
         {
@@ -2345,7 +2372,6 @@ Ext
             });
         }
 });
-
 
             Rally.launchApp('Rally.apps.releasetracking.VisualizationBannerApp', {
                 name:"Visualization Board",

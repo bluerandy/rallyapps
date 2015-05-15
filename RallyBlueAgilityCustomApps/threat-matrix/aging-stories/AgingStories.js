@@ -73,7 +73,7 @@ Ext.define('AgingStories', {
             if (this.currentTimebox === null || release.get('Name') != this.currentTimebox.get('Name'))
             {
                 this.currentTimebox = release;
-                app.getContext().setTimeboxScope(release, 'release');
+                this.getContext().setTimeboxScope(release, 'release');
                 this._updateBoard();
             } else
             {
@@ -85,11 +85,11 @@ Ext.define('AgingStories', {
             if (this.currentTimebox === null || iteration.get('Name') != this.currentTimebox.get('Name'))
             {
                 this.currentTimebox = iteration;
-                app.getContext().setTimeboxScope(iteration, 'iteration');
+                this.getContext().setTimeboxScope(iteration, 'iteration');
                 this._updateBoard();
             } else
             {
                 console.log("Visualization: iteration change message, no change");
             }
-        },
+        }
 });

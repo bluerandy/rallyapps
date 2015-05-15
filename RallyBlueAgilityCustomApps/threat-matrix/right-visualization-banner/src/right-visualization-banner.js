@@ -56,5 +56,5 @@ Ext.define('RightVisualizationBannerApp', {
         } else {
             console.log("Visualization: iteration change message, no change");
         }
-    },
+    }
 });

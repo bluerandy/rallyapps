@@ -22,7 +22,7 @@ Ext.define('ProgramRisks', {
             });
             var isRisk = Ext.create('Rally.data.wsapi.Filter', {
                     property : 'State.Name',
-                    operator : '!=',                   
+                    operator : '!=',
                     value : 'Done'
             });
             var filters = timeboxFilter.and(isRisk).and(notDone);
@@ -64,36 +64,48 @@ Ext.define('ProgramRisks', {
         },
         _releaseChanged : function(release)
         {
-            var releaseStartFilter = Ext.create('Rally.data.wsapi.Filter', {
-                    property : "PlannedEndDate",
-                    operator : ">=",
-                    value : Rally.util.DateTime.toIsoString(release.get('ReleaseStartDate'))
-            });
-            var releaseEndFilter = Ext.create('Rally.data.wsapi.Filter', {
-                    property : "PlannedEndDate",
-                    operator : "<=",
-                    value : Rally.util.DateTime.toIsoString(release.get('ReleaseDate'))
-            });
-            var timeboxFilter = releaseEndFilter.and(releaseStartFilter);
-            console.log("Risks: Got release changed message", timeboxFilter);
-            this.getContext().setTimeboxScope(release, 'release');
-            this._updateBoard(timeboxFilter);
+            if (this.currentTimebox === null || release.get('Name') != this.currentTimebox.get('Name'))
+            {
+                var releaseStartFilter = Ext.create('Rally.data.wsapi.Filter', {
+                        property : "PlannedEndDate",
+                        operator : ">=",
+                        value : Rally.util.DateTime.toIsoString(release.get('ReleaseStartDate'))
+                });
+                var releaseEndFilter = Ext.create('Rally.data.wsapi.Filter', {
+                        property : "PlannedEndDate",
+                        operator : "<=",
+                        value : Rally.util.DateTime.toIsoString(release.get('ReleaseDate'))
+                });
+                var timeboxFilter = releaseEndFilter.and(releaseStartFilter);
+                this.currentTimebox = release;
+                this.getContext().setTimeboxScope(release, 'release');
+                this._updateBoard(timeboxFilter);
+            } else
+            {
+                console.log("aging tasks: Release change message, no change");
+            }
         },
         _iterationChanged : function(iteration)
         {
-            var iterationStartFilter = Ext.create('Rally.data.wsapi.Filter', {
-                    property : "PlannedEndDate",
-                    operator : ">=",
-                    value : Rally.util.DateTime.toIsoString(iteration.get('StartDate'))
-            });
-            var iterationEndFilter = Ext.create('Rally.data.wsapi.Filter', {
-                    property : "PlannedEndDate",
-                    operator : "<=",
-                    value : Rally.util.DateTime.toIsoString(iteration.get('EndDate'))
-            });
-            var timeboxFilter = iterationStartFilter.and(iterationEndFilter);
-            console.log("Risks: Got iteration changed message", timeboxFilter);
-            this.getContext().setTimeboxScope(iteration, 'iteration');
-            this._updateBoard(timeboxFilter);
+            if (this.currentTimebox === null || iteration.get('Name') != this.currentTimebox.get('Name'))
+            {
+                var iterationStartFilter = Ext.create('Rally.data.wsapi.Filter', {
+                        property : "PlannedEndDate",
+                        operator : ">=",
+                        value : Rally.util.DateTime.toIsoString(iteration.get('StartDate'))
+                });
+                var iterationEndFilter = Ext.create('Rally.data.wsapi.Filter', {
+                        property : "PlannedEndDate",
+                        operator : "<=",
+                        value : Rally.util.DateTime.toIsoString(iteration.get('EndDate'))
+                });
+                var timeboxFilter = iterationStartFilter.and(iterationEndFilter);
+                this.currentTimebox = iteration;
+                this.getContext().setTimeboxScope(iteration, 'iteration');
+                this._updateBoard(timeboxFilter);
+            } else
+            {
+                console.log("tasks: iteration change message, no change");
+            }
         }
 });

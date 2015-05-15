@@ -1,5 +1,6 @@
 Ext.define('BlockedStories', {
         extend : 'Rally.app.App',
+        currentTimebox : null,
         mixins : [
             'Rally.Messageable'
         ],
@@ -9,6 +10,8 @@ Ext.define('BlockedStories', {
             this.subscribe(this, 'timeboxReleaseChanged', this._releaseChanged, this);
             this.subscribe(this, 'timeboxIterationChanged', this._iterationChanged, this);
             var app = this;
+            if (this.currentTimebox === null)
+                this.publish('requestTimebox', this);
         },
         _updateBoard : function()
         {
@@ -61,14 +64,26 @@ Ext.define('BlockedStories', {
         },
         _releaseChanged : function(release)
         {
-            console.log("BlockedStories: Got release changed message");
-            this.getContext().setTimeboxScope(release, 'release');
-            this._updateBoard();
+            if (this.currentTimebox === null || release.get('Name') != this.currentTimebox.get('Name'))
+            {
+                this.currentTimebox = release;
+                this.getContext().setTimeboxScope(release, 'release');
+                this._updateBoard();
+            } else
+            {
+                console.log("aging tasks: Release change message, no change");
+            }
         },
         _iterationChanged : function(iteration)
         {
-            console.log("Blocked Stories: Got iteration changed message");
-            this.getContext().setTimeboxScope(iteration, 'iteration');
-            this._updateBoard();
+            if (this.currentTimebox === null || iteration.get('Name') != this.currentTimebox.get('Name'))
+            {
+                this.currentTimebox = iteration;
+                this.getContext().setTimeboxScope(iteration, 'iteration');
+                this._updateBoard();
+            } else
+            {
+                console.log("tasks: iteration change message, no change");
+            }
         }
 });

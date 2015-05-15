@@ -10,342 +10,341 @@
 <script type="text/javascript" src="/apps/2.0rc3/sdk.js"></script>
 <![endif]>
 
+
 <script type="text/javascript">
-    Rally
-                    .onReady(function()
+        Rally.onReady(function () {
+                Ext.define('MyWorkQueue', {
+        extend : 'Rally.app.App',
+        mixins : [
+            'Rally.Messageable'
+        ],
+        componentCls : 'app',
+        launch : function()
+        {
+            this.subscribe(this, 'timeboxReleaseChanged', this._releaseChanged, this);
+            this.subscribe(this, 'timeboxIterationChanged', this._iterationChanged, this);
+            var me = this;
+            if (this.currentTimebox === null)
+                this.publish('requestTimebox', this);
+        },
+        _updateBoard : function(portfolioTimeboxFilter, storyTimeboxFilter)
+        {
+            var me = this;
+            var field_names = [
+                            'Name',
+                            'State',
+                            'FormattedID',
+                            'PortfolioItemType',
+                            'ScheduleState'
+            ];
+            var base_filter = Ext.create('Rally.data.wsapi.Filter', {
+                    property : 'Owner',
+                    value : this.getContext().getUser()._ref
+            });
+            var ss_filter = Ext.create('Rally.data.wsapi.Filter', {
+                    property : 'ScheduleState',
+                    operator : '<',
+                    value : 'Accepted'
+            });
+            var state_filter = Ext.create('Rally.data.wsapi.Filter', {
+                    property : 'State',
+                    operator : '<',
+                    value : 'Completed'
+            });
+            var stateAndTimeFilter = state_filter.and(storyTimeboxFilter);
+            var portfolio_filter = Ext.create('Rally.data.wsapi.Filter', {
+                    property : 'State.Name',
+                    operator : '!=',
+                    value : 'Done'
+            });
+            var p_filter = portfolio_filter.and(portfolioTimeboxFilter);
+            var s_filter = ss_filter.and(storyTimeboxFilter);
+            var queries_to_run = {
+                    'Defect' : s_filter,
+                    'Task' : stateAndTimeFilter,
+                    'PortfolioItem' : p_filter,
+                    'HierarchicalRequirement' : s_filter
+            };
+            var promises = [];
+            Ext.Object.each(queries_to_run, function(model_name, add_filter)
+            {
+                var p = function()
+                {
+                    return me._loadAStoreWithAPromise(model_name, field_names, base_filter.and(add_filter));
+                };
+                promises.push(p);
+            });
+            Deft.Chain.sequence(promises).then({
+                    scope : this,
+                    success : function(results)
                     {
-                        Ext.define('MyWorkQueue', {
-                                extend : 'Rally.app.App',
-                                mixins : [
-                                    'Rally.Messageable'
-                                ],
-                                componentCls : 'app',
-                                launch : function()
-                                {
-                                    this.subscribe(this, 'timeboxReleaseChanged', this._releaseChanged, this);
-                                    this.subscribe(this, 'timeboxIterationChanged', this._iterationChanged, this);
-                                    var me = this;
-                                },
-                                _updateBoard : function(portfolioTimeboxFilter, storyTimeboxFilter)
-                                {
-                                    var me = this;
-                                    var field_names = [
-                                                    'Name',
-                                                    'State',
-                                                    'FormattedID',
-                                                    'PortfolioItemType',
-                                                    'ScheduleState'
-                                    ];
-                                    var base_filter = Ext.create('Rally.data.wsapi.Filter', {
-                                            property : 'Owner',
-                                            value : this.getContext().getUser()._ref
-                                    });
-                                    var ss_filter = Ext.create('Rally.data.wsapi.Filter', {
-                                            property : 'ScheduleState',
-                                            operator : '<',
-                                            value : 'Accepted'
-                                    });
-                                    var state_filter = Ext.create('Rally.data.wsapi.Filter', {
-                                            property : 'State',
-                                            operator : '<',
-                                            value : 'Completed'
-                                    });
-                                    var stateAndTimeFilter = state_filter.and(storyTimeboxFilter);
-                                    var portfolio_filter = Ext.create('Rally.data.wsapi.Filter', {
-                                            property : 'State.Name',
-                                            operator : '!=',
-                                            value : 'Done'
-                                    });
-                                    var p_filter = portfolio_filter.and(portfolioTimeboxFilter);
-                                    var s_filter = ss_filter.and(storyTimeboxFilter);
-                                    var queries_to_run = {
-                                            'Defect' : s_filter,
-                                            'Task' : stateAndTimeFilter,
-                                            'PortfolioItem' : p_filter,
-                                            'HierarchicalRequirement' : s_filter
-                                    };
-                                    var promises = [];
-                                    Ext.Object.each(queries_to_run, function(model_name, add_filter)
-                                    {
-                                        var p = function()
-                                        {
-                                            return me._loadAStoreWithAPromise(model_name, field_names, base_filter.and(add_filter));
-                                        };
-                                        promises.push(p);
-                                    });
-                                    Deft.Chain.sequence(promises).then({
-                                            scope : this,
-                                            success : function(results)
-                                            {
-                                                var records = Ext.Array.flatten(results);
-                                                Ext.Array.each(records, function(record)
-                                                {
-                                                    if (record.get('ScheduleState'))
-                                                    {
-                                                        record.set('__State', record.get('ScheduleState'));
-                                                    } else if (record.get('PortfolioItemType'))
-                                                    {
-                                                        record.set('__State', record.get('State.Name'));
-                                                    } else
-                                                    {
-                                                        record.set('__State', record.get('State'));
-                                                    }
-                                                });
-                                                var store = Ext.create('Rally.data.custom.Store', {
-                                                    data : records
-                                                });
-                                                this._displayGrid(store, field_names);
-                                            },
-                                            failure : function(error_message)
-                                            {
-                                                alert(error_message);
-                                            }
-                                    }).always(function()
-                                    {
-                                        me.setLoading(false);
-                                    });
-                                },
-                                _loadAStoreWithAPromise : function(model_name, model_fields, filters)
-                                {
-                                    var deferred = Ext.create('Deft.Deferred');
-                                    var me = this;
-                                    Ext.create('Rally.data.wsapi.Store', {
-                                            model : model_name,
-                                            fetch : model_fields,
-                                            filters : filters
-                                    }).load({
-                                        callback : function(records, operation, successful)
-                                        {
-                                            if (successful)
-                                            {
-                                                deferred.resolve(records);
-                                            } else
-                                            {
-                                                deferred.reject('Problem loading: ' + operation.error.errors.join('. '));
-                                            }
-                                        }
-                                    });
-                                    return deferred.promise;
-                                },
-                                _displayGrid : function(store, field_names)
-                                {
-                                    this.remove('workqueue');
-                                    this.add({
-                                            xtype : 'rallygrid',
-                                            itemId : 'workqueue',
-                                            enableBulkEdit : true,
-                                            store : store,
-                                            sorters : {
-                                                    property : 'Rank',
-                                                    direction : 'ASC'
-                                            },
-                                            columnCfgs : [
-                                                            {
-                                                                    text : 'ID',
-                                                                    dataIndex : 'FormattedID',
-                                                                    width : 100,
-                                                                    xtype : 'templatecolumn',
-                                                                    tpl : Ext.create('Rally.ui.renderer.template.FormattedIDTemplate')
-                                                            },
-                                                            {
-                                                                    text : 'Name',
-                                                                    width : 400,
-                                                                    dataIndex : 'Name'
-                                                            },
-                                                            {
-                                                                    text : 'State',
-                                                                    dataIndex : '__State'
-                                                            }
-                                            ]
-                                    });
-                                },
-                                _releaseChanged : function(release)
-                                {
-                                    var releaseStartFilter = Ext.create('Rally.data.wsapi.Filter', {
-                                            property : 'PlannedEndDate',
-                                            operator : '>=',
-                                            value : Rally.util.DateTime.toIsoString(release.get('ReleaseStartDate'))
-                                    });
-                                    var releaseEndFilter = Ext.create('Rally.data.wsapi.Filter', {
-                                            property : 'PlannedEndDate',
-                                            operator : '<=',
-                                            value : Rally.util.DateTime.toIsoString(release.get('ReleaseDate'))
-                                    });
-                                    var portfolioTimeboxFilter = releaseEndFilter.and(releaseStartFilter);
-                                    var storyFilter = Ext.create('Rally.data.wsapi.Filter', {
-                                            property : 'Release.Name',
-                                            value : release.get('Name')
-                                    });
-                                    this.getContext().setTimeboxScope(release, 'release');
-                                    this._updateBoard(portfolioTimeboxFilter, storyFilter);
-                                },
-                                _iterationChanged : function(iteration)
-                                {
-                                    var iterationStartFilter = Ext.create('Rally.data.wsapi.Filter', {
-                                            property : 'PlannedEndDate',
-                                            operator : '>=',
-                                            value : Rally.util.DateTime.toIsoString(iteration.get('StartDate'))
-                                    });
-                                    var iterationEndFilter = Ext.create('Rally.data.wsapi.Filter', {
-                                            property : 'PlannedEndDate',
-                                            operator : '<=',
-                                            value : Rally.util.DateTime.toIsoString(iteration.get('EndDate'))
-                                    });
-                                    var portfolioTimeboxFilter = iterationStartFilter.and(iterationEndFilter);
-                                    var storyFilter = Ext.create('Rally.data.wsapi.Filter', {
-                                            property : 'Iteration.Name',
-                                            value : iteration.get('Name')
-                                    });
-                                    this.getContext().setTimeboxScope(iteration, 'iteration');
-                                    this._updateBoard(portfolioTimeboxFilter, storyFilter);
-                                }
+                        var records = Ext.Array.flatten(results);
+                        Ext.Array.each(records, function(record)
+                        {
+                            if (record.get('ScheduleState'))
+                            {
+                                record.set('__State', record.get('ScheduleState'));
+                            } else if (record.get('PortfolioItemType'))
+                            {
+                                record.set('__State', record.get('State.Name'));
+                            } else
+                            {
+                                record.set('__State', record.get('State'));
+                            }
                         });
-                        Ext
-                                        .define(
-                                                        "GridExporter",
-                                                        {
-                                                                dateFormat : 'Y-m-d g:i',
-                                                                exportGrid : function(grid)
-                                                                {
-                                                                    if (Ext.isIE)
-                                                                    {
-                                                                        this._ieToExcel(grid);
-                                                                    } else
-                                                                    {
-                                                                        var data = this._getCSV(grid);
-                                                                        window.location = 'data:text/csv;charset=utf8,' + encodeURIComponent(data);
-                                                                    }
-                                                                },
-                                                                _escapeForCSV : function(string)
-                                                                {
-                                                                    if (string.match(/,/))
-                                                                    {
-                                                                        if (!string.match(/"/))
-                                                                        {
-                                                                            string = '"' + string + '"';
-                                                                        } else
-                                                                        {
-                                                                            string = string.replace(/,/g, ''); // comma's and quotes-- sorry, just lose the commas
-                                                                        }
-                                                                    }
-                                                                    return string;
-                                                                },
-                                                                _getFieldText : function(fieldData)
-                                                                {
-                                                                    var text;
-                                                                    if (fieldData === null || fieldData === undefined)
-                                                                    {
-                                                                        text = '';
-                                                                    } else if (fieldData._refObjectName && !fieldData.getMonth)
-                                                                    {
-                                                                        text = fieldData._refObjectName;
-                                                                    } else if (fieldData instanceof Date)
-                                                                    {
-                                                                        text = Ext.Date.format(fieldData, this.dateFormat);
-                                                                    } else if (!fieldData.match)
-                                                                    { // not a string or object we recognize...bank it out
-                                                                        text = '';
-                                                                    } else
-                                                                    {
-                                                                        text = fieldData;
-                                                                    }
-                                                                    return text;
-                                                                },
-                                                                _getFieldTextAndEscape : function(fieldData)
-                                                                {
-                                                                    var string = this._getFieldText(fieldData);
-                                                                    return this._escapeForCSV(string);
-                                                                },
-                                                                _getCSV : function(grid)
-                                                                {
-                                                                    var cols = grid.columns;
-                                                                    var store = grid.store;
-                                                                    var data = '';
-                                                                    var that = this;
-                                                                    Ext.Array.each(cols, function(col, index)
-                                                                    {
-                                                                        if (col.hidden !== true)
-                                                                        {
-                                                                            data += that._getFieldTextAndEscape(col.text) + ',';
-                                                                        }
-                                                                    });
-                                                                    data += "\n";
-                                                                    store.each(function(record)
-                                                                    {
-                                                                        var entry = record.getData();
-                                                                        Ext.Array.each(cols, function(col, index)
-                                                                        {
-                                                                            if (col.hidden !== true)
-                                                                            {
-                                                                                var fieldName = col.dataIndex;
-                                                                                var text = entry[fieldName];
-                                                                                data += that._getFieldTextAndEscape(text) + ',';
-                                                                            }
-                                                                        });
-                                                                        data += "\n";
-                                                                    });
-                                                                    return data;
-                                                                },
-                                                                _ieGetGridData : function(grid, sheet)
-                                                                {
-                                                                    var that = this;
-                                                                    var resourceItems = grid.store.data.items;
-                                                                    var cols = grid.columns;
-                                                                    Ext.Array.each(cols, function(col, colIndex)
-                                                                    {
-                                                                        if (col.hidden !== true)
-                                                                        {
-                                                                            console.log('header: ', col.text);
-                                                                            sheet.cells(1, colIndex + 1).value = col.text;
-                                                                        }
-                                                                    });
-                                                                    var rowIndex = 2;
-                                                                    grid.store.each(function(record)
-                                                                    {
-                                                                        var entry = record.getData();
-                                                                        Ext.Array.each(cols, function(col, colIndex)
-                                                                        {
-                                                                            if (col.hidden !== true)
-                                                                            {
-                                                                                var fieldName = col.dataIndex;
-                                                                                var text = entry[fieldName];
-                                                                                var value = that._getFieldText(text);
-                                                                                sheet.cells(rowIndex, colIndex + 1).value = value;
-                                                                            }
-                                                                        });
-                                                                        rowIndex++;
-                                                                    });
-                                                                },
-                                                                _ieToExcel : function(grid)
-                                                                {
-                                                                    if (window.ActiveXObject)
-                                                                    {
-                                                                        var xlApp, xlBook;
-                                                                        try
-                                                                        {
-                                                                            xlApp = new ActiveXObject("Excel.Application");
-                                                                            xlBook = xlApp.Workbooks.Add();
-                                                                        } catch (e)
-                                                                        {
-                                                                            Ext.Msg
-                                                                                            .alert('Error',
-                                                                                                            'For the export to work in IE, you have to enable a security setting called "Initialize and script ActiveX control not marked as safe" from Internet Options -> Security -> Custom level..."');
-                                                                            return;
-                                                                        }
-                                                                        xlBook.worksheets("Sheet1").activate();
-                                                                        var XlSheet = xlBook.activeSheet;
-                                                                        xlApp.visible = true;
-                                                                        this._ieGetGridData(grid, XlSheet);
-                                                                        XlSheet.columns.autofit();
-                                                                    }
-                                                                }
-                                                        });
-                        Rally.launchApp('MyWorkQueue', {
-                                name : "My Work Queue",
-                                parentRepos : "sficarrotta/Multi-item-grid"
+                        var store = Ext.create('Rally.data.custom.Store', {
+                            data : records
                         });
-                    });
-</script>
+                        this._displayGrid(store, field_names);
+                    },
+                    failure : function(error_message)
+                    {
+                        alert(error_message);
+                    }
+            }).always(function()
+            {
+                me.setLoading(false);
+            });
+        },
+        _loadAStoreWithAPromise : function(model_name, model_fields, filters)
+        {
+            var deferred = Ext.create('Deft.Deferred');
+            var me = this;
+            Ext.create('Rally.data.wsapi.Store', {
+                    model : model_name,
+                    fetch : model_fields,
+                    filters : filters
+            }).load({
+                callback : function(records, operation, successful)
+                {
+                    if (successful)
+                    {
+                        deferred.resolve(records);
+                    } else
+                    {
+                        deferred.reject('Problem loading: ' + operation.error.errors.join('. '));
+                    }
+                }
+            });
+            return deferred.promise;
+        },
+        _displayGrid : function(store, field_names)
+        {
+            this.remove('workqueue');
+            this.add({
+                    xtype : 'rallygrid',
+                    itemId : 'workqueue',
+                    enableBulkEdit : true,
+                    store : store,
+                    sorters : {
+                            property : 'Rank',
+                            direction : 'ASC'
+                    },
+                    columnCfgs : [
+                                    {
+                                            text : 'ID',
+                                            dataIndex : 'FormattedID',
+                                            width : 100,
+                                            xtype : 'templatecolumn',
+                                            tpl : Ext.create('Rally.ui.renderer.template.FormattedIDTemplate')
+                                    },
+                                    {
+                                            text : 'Name',
+                                            width : 400,
+                                            dataIndex : 'Name'
+                                    },
+                                    {
+                                            text : 'State',
+                                            dataIndex : '__State'
+                                    }
+                    ]
+            });
+        },
+        _releaseChanged : function(release)
+        {
+            if (this.currentTimebox === null || release.get('Name') != this.currentTimebox.get('Name'))
+            {
+                this.currentTimebox = release;
+                var releaseStartFilter = Ext.create('Rally.data.wsapi.Filter', {
+                        property : 'PlannedEndDate',
+                        operator : '>=',
+                        value : Rally.util.DateTime.toIsoString(release.get('ReleaseStartDate'))
+                });
+                var releaseEndFilter = Ext.create('Rally.data.wsapi.Filter', {
+                        property : 'PlannedEndDate',
+                        operator : '<=',
+                        value : Rally.util.DateTime.toIsoString(release.get('ReleaseDate'))
+                });
+                var portfolioTimeboxFilter = releaseEndFilter.and(releaseStartFilter);
+                var storyFilter = Ext.create('Rally.data.wsapi.Filter', {
+                        property : 'Release.Name',
+                        value : release.get('Name')
+                });
+                this.getContext().setTimeboxScope(release, 'release');
+                this._updateBoard(portfolioTimeboxFilter, storyFilter);
+            }
+        },
+        _iterationChanged : function(iteration)
+        {
+            if (this.currentTimebox === null || iteration.get('Name') != this.currentTimebox.get('Name'))
+            {
+                this.currentTimebox = iteration;
+                var iterationStartFilter = Ext.create('Rally.data.wsapi.Filter', {
+                        property : 'PlannedEndDate',
+                        operator : '>=',
+                        value : Rally.util.DateTime.toIsoString(iteration.get('StartDate'))
+                });
+                var iterationEndFilter = Ext.create('Rally.data.wsapi.Filter', {
+                        property : 'PlannedEndDate',
+                        operator : '<=',
+                        value : Rally.util.DateTime.toIsoString(iteration.get('EndDate'))
+                });
+                var portfolioTimeboxFilter = iterationStartFilter.and(iterationEndFilter);
+                var storyFilter = Ext.create('Rally.data.wsapi.Filter', {
+                        property : 'Iteration.Name',
+                        value : iteration.get('Name')
+                });
+                this.getContext().setTimeboxScope(iteration, 'iteration');
+                this._updateBoard(portfolioTimeboxFilter, storyFilter);
+            }
+        }
+});
+                Ext.define("GridExporter", {
+    dateFormat : 'Y-m-d g:i',
+
+    exportGrid: function(grid) {
+        if (Ext.isIE) {
+            this._ieToExcel(grid);
+        } else {
+            var data = this._getCSV(grid);
+            window.location = 'data:text/csv;charset=utf8,' + encodeURIComponent(data);
+        }
+    },
+
+    _escapeForCSV: function(string) {
+        if (string.match(/,/)) {
+            if (!string.match(/"/)) {
+                string = '"' + string + '"';
+            } else {
+                string = string.replace(/,/g, ''); // comma's and quotes-- sorry, just lose the commas
+            }
+        }
+        return string;
+    },
+
+    _getFieldText: function(fieldData) {
+        var text;
+
+        if (fieldData === null || fieldData === undefined) {
+            text = '';
+            
+        } else if (fieldData._refObjectName && !fieldData.getMonth) {
+            text = fieldData._refObjectName;
+
+        } else if (fieldData instanceof Date) {
+            text = Ext.Date.format(fieldData, this.dateFormat);
+
+        } else if (!fieldData.match) { // not a string or object we recognize...bank it out
+            text = '';
+
+        } else {
+            text = fieldData;
+        }
+
+        return text;
+    },
+
+    _getFieldTextAndEscape: function(fieldData) {
+        var string  = this._getFieldText(fieldData);
+        return this._escapeForCSV(string);
+    },
+
+    _getCSV: function (grid) {
+        var cols    = grid.columns;
+        var store   = grid.store;
+        var data    = '';
+
+        var that = this;
+        Ext.Array.each(cols, function(col, index) {
+            if (col.hidden !== true) {
+                data += that._getFieldTextAndEscape(col.text) + ',';
+            }
+        });
+        data += "\n";
+
+        store.each(function(record) {
+            var entry       = record.getData();
+            Ext.Array.each(cols, function(col, index) {
+                if (col.hidden !== true) {
+                    var fieldName   = col.dataIndex;
+                    var text        = entry[fieldName];
+
+                    data += that._getFieldTextAndEscape(text) + ',';
+                }
+            });
+            data += "\n";
+        });
+
+        return data;
+    },
+
+    _ieGetGridData : function(grid, sheet) {
+        var that            = this;
+        var resourceItems   = grid.store.data.items;
+        var cols            = grid.columns;
+
+        Ext.Array.each(cols, function(col, colIndex) {
+            if (col.hidden !== true) {
+                console.log('header: ', col.text);
+                sheet.cells(1,colIndex + 1).value = col.text;
+            }
+        });
+
+        var rowIndex = 2;
+        grid.store.each(function(record) {
+            var entry   = record.getData();
+
+            Ext.Array.each(cols, function(col, colIndex) {
+                if (col.hidden !== true) {
+                    var fieldName   = col.dataIndex;
+                    var text        = entry[fieldName];
+                    var value       = that._getFieldText(text);
+
+                    sheet.cells(rowIndex, colIndex+1).value = value;
+                }
+            });
+            rowIndex++;
+        });
+    },
+
+    _ieToExcel: function (grid) {
+        if (window.ActiveXObject){
+            var  xlApp, xlBook;
+            try {
+                xlApp = new ActiveXObject("Excel.Application"); 
+                xlBook = xlApp.Workbooks.Add();
+            } catch (e) {
+                Ext.Msg.alert('Error', 'For the export to work in IE, you have to enable a security setting called "Initialize and script ActiveX control not marked as safe" from Internet Options -> Security -> Custom level..."');
+                return;
+            }
+
+            xlBook.worksheets("Sheet1").activate();
+            var XlSheet = xlBook.activeSheet;
+            xlApp.visible = true; 
+
+           this._ieGetGridData(grid, XlSheet);
+           XlSheet.columns.autofit(); 
+        }
+    }
+});
+
+            Rally.launchApp('MyWorkQueue', {
+                name:"My Work Queue",
+	            parentRepos:"sficarrotta/Multi-item-grid"
+            });
+
+        });
+    </script>
 
 
 
