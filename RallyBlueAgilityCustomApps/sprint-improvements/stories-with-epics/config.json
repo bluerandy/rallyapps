@@ -5,5 +5,8 @@
    "sdk": "2.0rc3",
    "javascript": [
       "StoriesWithEpics.js"
+   ],
+   "css": [
+      "app.css"
    ]
 }
