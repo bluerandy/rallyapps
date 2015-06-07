@@ -29,14 +29,14 @@ Ext.define('AgingStories', {
                 width: 100
             }, {
                 dataIndex: 'Name',
-                width: 300
+                width: 600
             }, {
                 dataIndex: 'Owner',
                 width: 100
             }, {
                 text: '',
                 dataIndex: null,
-                width: 250
+                width: 600
             }, {
                 text: 'Age (Days)',
                 dataIndex: 'InProgressDate',

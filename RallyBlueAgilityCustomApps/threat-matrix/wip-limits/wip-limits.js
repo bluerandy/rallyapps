@@ -84,15 +84,17 @@ Ext.define('wip-limits', {
             columnCfgs: [{
                 text: 'Project',
                 dataIndex: 'project',
-                width: 250,
+                width: 700,
                 align: 'center'
             }, {
                 text: 'Defined',
                 dataIndex: 'Defined',
+                width: 160,
                 align: 'center'
             }, {
                 text: 'Defined Limit',
                 dataIndex: 'DefinedWIP',
+                width: 160,
                 editor: {
                     xtype: 'textfield'
                 },
@@ -101,10 +103,12 @@ Ext.define('wip-limits', {
             }, {
                 text: 'In-Progress',
                 dataIndex: 'In-Progress',
+                width: 160,
                 align: 'center'
             }, {
                 text: 'In-Progress Limit',
                 dataIndex: 'In-ProgressWIP',
+                width: 160,
                 editor: {
                     xtype: 'textfield'
                 },
@@ -113,10 +117,12 @@ Ext.define('wip-limits', {
             }, {
                 text: 'Completed',
                 dataIndex: 'Completed',
+                width: 160,
                 align: 'center'
             }, {
                 text: 'Completed Limit',
                 dataIndex: 'CompletedWIP',
+                width: 160,
                 editor: {
                     xtype: 'textfield'
                 },

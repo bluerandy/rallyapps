@@ -3,13 +3,11 @@
 
 <head>
     <title>wip-limits</title>
-    <!--[if IE]>
-<script type="text/javascript" src="//rally1.rallydev.com/apps/2.0rc3/sdk.js"></script>
-<![endif]-->
-    <![if !IE]>
     <script type="text/javascript" src="/apps/2.0rc3/sdk.js"></script>
-    <![endif]>
     <script type="text/javascript">
+    if (!window.location.origin) {
+        window.location.origin = window.location.protocol + "//" + window.location.hostname + (window.location.port ? ':' + window.location.port : '');
+    }
     Rally.onReady(function() {
         Ext.define('wip-limits', {
             extend: 'Rally.app.App',
@@ -97,15 +95,17 @@
                     columnCfgs: [{
                         text: 'Project',
                         dataIndex: 'project',
-                        width: 250,
+                        width: 700,
                         align: 'center'
                     }, {
                         text: 'Defined',
                         dataIndex: 'Defined',
+                        width: 160,
                         align: 'center'
                     }, {
                         text: 'Defined Limit',
                         dataIndex: 'DefinedWIP',
+                        width: 160,
                         editor: {
                             xtype: 'textfield'
                         },
@@ -114,10 +114,12 @@
                     }, {
                         text: 'In-Progress',
                         dataIndex: 'In-Progress',
+                        width: 160,
                         align: 'center'
                     }, {
                         text: 'In-Progress Limit',
                         dataIndex: 'In-ProgressWIP',
+                        width: 160,
                         editor: {
                             xtype: 'textfield'
                         },
@@ -126,10 +128,12 @@
                     }, {
                         text: 'Completed',
                         dataIndex: 'Completed',
+                        width: 160,
                         align: 'center'
                     }, {
                         text: 'Completed Limit',
                         dataIndex: 'CompletedWIP',
+                        width: 160,
                         editor: {
                             xtype: 'textfield'
                         },
@@ -210,7 +214,7 @@
     <style type="text/css">
     .limit {
         background-color: #d9d9d9 !important;
-        color: white;
+        color: black;
         font-weight: bold;
     }
     </style>

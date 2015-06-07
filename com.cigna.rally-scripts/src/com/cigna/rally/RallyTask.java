@@ -187,7 +187,7 @@ public abstract class RallyTask
 
 		printErrorsAndWarnings(projectsResponse);
 
-		Project project = getProject(projectMap, workspaceId, ref, includeChildren, includeTeamMembers, includeEditors);
+		Project project = getProject(projectMap, workspaceId, null, ref, includeChildren, includeTeamMembers, includeEditors);
 		log.info("Read project: " + project.getName());
 		return projectMap;
 
@@ -198,11 +198,13 @@ public abstract class RallyTask
 		return loadProjectTree(workspaceId, projectName, includeChildren, false, false);
 	}
 
-	private Project getProject(HashMap<String, Project> projectMap, String workspaceId, String ref, Boolean includeChildren, Boolean includeTeamMembers, Boolean includeEditors)
-			throws Exception
+	private Project getProject(HashMap<String, Project> projectMap, String workspaceId, Project parent, String ref, Boolean includeChildren, Boolean includeTeamMembers,
+			Boolean includeEditors) throws Exception
 	{
 		Project project = new Project();
 		project.setWorkspace(workspaceId);
+		if (parent != null)
+			project.setParent(parent);
 
 		GetRequest projectRequest = new GetRequest(ref);
 		projectRequest.setFetch(project.getFetch());
@@ -244,7 +246,8 @@ public abstract class RallyTask
 			JsonObject object = projectsResponse.getResults().get(i).getAsJsonObject();
 
 			String ref = Ref.getRelativeRef(object.get("_ref").getAsString());
-			Project project = getProject(projectMap, parent.getWorkspace(), ref, true, includeTeamMembers, includeEditors);
+			Project project = getProject(projectMap, parent.getWorkspace(), parent, ref, true, includeTeamMembers, includeEditors);
+			parent.getChildren().add(project);
 			log.info("Read project: " + project);
 		}
 	}

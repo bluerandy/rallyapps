@@ -34,7 +34,7 @@ public class FixStoryPermissions extends RallyTask
 		Project sourceProject = getProjectReference(sourceWorkspaceId, sourceProjectName);
 		Project destProject = getProjectReference(destWorkspaceId, sourceProjectName);
 
-		processType("heirarchicalrequirement", sourceProject, destProject);
+		processType("hierarchicalrequirement", sourceProject, destProject);
 		processType("defect", sourceProject, destProject);
 	}
 
