@@ -8,7 +8,7 @@
       "src/plugin/PortfolioTypeChooser.js",
       "src/TreeStore.js",
       "src/TreeStoreBuilder.js",
-      "src/VisibilityDashboardApp.js"
+      "VisibilityDashboardApp.js"
    ],
    "css": [
       "app.css"

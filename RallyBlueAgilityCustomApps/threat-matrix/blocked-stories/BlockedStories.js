@@ -1,6 +1,9 @@
 Ext.define('BlockedStories', {
     extend: 'Rally.app.App',
     currentTimebox: null,
+    layout: {
+        type: "fit"
+    },
     mixins: [
         'Rally.Messageable'
     ],
@@ -30,31 +33,29 @@ Ext.define('BlockedStories', {
             itemId: 'blockedgrid',
             enableBulkEdit: true,
             columnCfgs: [{
-                    dataIndex: 'FormattedID',
-                    width: 100
-                }, {
-                    dataIndex: 'Name',
-                    width: 500
-                },
-                {
-                    dataIndex: 'ScheduleState',
-                    width: 100
-                }, {
-                    dataIndex: 'Owner',
-                    width: 100
-                }, {
-                    dataIndex: 'BlockedReason',
-                    width: 600
-                }, {
-                    text: 'Age (Days)',
-                    dataIndex: 'LastUpdateDate',
-                    width: 60,
-                    renderer: function(value) {
-                        var today = new Date();
-                        return Math.floor((today - value) / (1000 * 60 * 60 * 24));
-                    }
+                dataIndex: 'FormattedID',
+                width: 100
+            }, {
+                dataIndex: 'Name',
+                flex: 1
+            }, {
+                dataIndex: 'Owner',
+                flex: 0.5
+            }, {
+                dataIndex: 'ScheduleState',
+                width: 100
+            }, {
+                dataIndex: 'BlockedReason',
+                flex: 2
+            }, {
+                text: 'Age (Days)',
+                dataIndex: 'LastUpdateDate',
+                width: 60,
+                renderer: function(value) {
+                    var today = new Date();
+                    return Math.floor((today - value) / (1000 * 60 * 60 * 24));
                 }
-            ],
+            }],
             context: this.getContext(),
             storeConfig: {
                 models: [

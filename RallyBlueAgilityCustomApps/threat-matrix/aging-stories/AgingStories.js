@@ -1,6 +1,9 @@
 Ext.define('AgingStories', {
     extend: 'Rally.app.App',
     currentTimebox: null,
+    layout: {
+        type: "fit"
+    },
     mixins: [
         'Rally.Messageable'
     ],
@@ -29,14 +32,14 @@ Ext.define('AgingStories', {
                 width: 100
             }, {
                 dataIndex: 'Name',
-                width: 600
+                flex: 1
             }, {
                 dataIndex: 'Owner',
-                width: 100
+                flex: 0.5
             }, {
                 text: '',
                 dataIndex: null,
-                width: 600
+                flex: 2
             }, {
                 text: 'Age (Days)',
                 dataIndex: 'InProgressDate',

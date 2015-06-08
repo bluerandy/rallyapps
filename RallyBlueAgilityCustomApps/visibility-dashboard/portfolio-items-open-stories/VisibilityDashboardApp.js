@@ -1,4 +1,4 @@
-Ext.define('Rally.apps.portfoliodrilldown.SuccessDashboardApp', {
+Ext.define('Rally.apps.portfoliodrilldown.VisibilityDashboardApp', {
     extend: 'Rally.app.App',
     currentTimebox: null,
     requires: [
@@ -61,18 +61,17 @@ Ext.define('Rally.apps.portfoliodrilldown.SuccessDashboardApp', {
     launch: function() {
         this.subscribe(this, 'timeboxReleaseChanged', this._releaseChanged, this);
         this.subscribe(this, 'timeboxIterationChanged', this._iterationChanged, this);
-        if (this.currentTimebox === null) {
-            console.log('Success Dashboard: currentTimebox is null, requesting timebox');
+        if (this.currentTimebox === null)
             this.publish('requestTimebox', this);
-        }
     },
     _updateGridBoard: function(timeboxFilter) {
-        console.log("UpdateGridBoard: ", timeboxFilter);
-        this.remove('successDashboardApp');
         var typeStore = Ext.create('Rally.data.wsapi.Store', {
             autoLoad: false,
             model: 'TypeDefinition',
-            sorters: [],
+            sorters: [{
+                property: 'Ordinal',
+                direction: 'ASC'
+            }],
             filters: [{
                 property: 'Parent.Name',
                 operator: '=',
@@ -117,7 +116,6 @@ Ext.define('Rally.apps.portfoliodrilldown.SuccessDashboardApp', {
         return _.union(this.sModelNames, this.eModelNames);
     },
     _getGridStore: function(timeboxFilter) {
-        console.log("GetGridStore: ", timeboxFilter);
         var childFilter = Ext.create('Rally.data.wsapi.Filter', {
             property: 'DirectChildrenCount',
             value: "0",
@@ -125,12 +123,10 @@ Ext.define('Rally.apps.portfoliodrilldown.SuccessDashboardApp', {
         });
         var someCompleted = Ext.create('Rally.data.wsapi.Filter', {
             property: 'PercentDoneByStoryCount',
-            value: "0",
-            operator: '>'
+            value: "100",
+            operator: '<'
         });
-        var filters = childFilter.and(someCompleted);
-        if (timeboxFilter !== null)
-            filters = filters.and(timeboxFilter);
+        var filters = timeboxFilter.and(childFilter).and(someCompleted);
         console.log('Filters: ', timeboxFilter, filters);
         var context = this.getContext(),
             config = {
@@ -138,6 +134,7 @@ Ext.define('Rally.apps.portfoliodrilldown.SuccessDashboardApp', {
                 autoLoad: false,
                 remoteSort: true,
                 filters: filters,
+                timeFilter: this.context.getTimeboxScope().getQueryFilter(),
                 root: {
                     expanded: true
                 },
@@ -146,18 +143,17 @@ Ext.define('Rally.apps.portfoliodrilldown.SuccessDashboardApp', {
             };
         return Ext.create('Rally.data.wsapi.TreeStoreBuilder').build(config).then({
             success: function(store) {
-                console.log("Success with TreeStoreBuilder");
                 return store;
             }
         });
     },
     _addGridBoard: function(gridStore) {
         var context = this.getContext();
-        this.remove('successDashboard');
+        this.remove('visibilityDashboard');
         this.gridboard = this.add({
-            itemId: 'successDashboardApp',
+            itemId: 'visibilityDashboard',
             xtype: 'rallygridboard',
-            stateId: 'successDashboardApp',
+            stateId: 'visibilityDashboard',
             context: context,
             plugins: this._getGridBoardPlugins(),
             modelNames: this._getModelNames(),
@@ -293,60 +289,44 @@ Ext.define('Rally.apps.portfoliodrilldown.SuccessDashboardApp', {
         }];
         return result;
     },
-    _createReleaseFilter: function(release) {
-        console.log('creating release filter: ', release);
-        var releaseStartFilter = Ext.create('Rally.data.wsapi.Filter', {
-            property: "PlannedEndDate",
-            operator: ">=",
-            value: Rally.util.DateTime.toIsoString(release.get('ReleaseStartDate'))
-        });
-        var releaseEndFilter = Ext.create('Rally.data.wsapi.Filter', {
-            property: "PlannedEndDate",
-            operator: "<=",
-            value: Rally.util.DateTime.toIsoString(release.get('ReleaseDate'))
-        });
-        return releaseEndFilter.and(releaseStartFilter);
-    },
     _releaseChanged: function(release) {
-        if (release !== null) {
-            console.log("Success Dashboard: Got release changed message", release);
-            if (_.isNull(this.currentTimebox) || release.get('Name') != this.currentTimebox.get('Name')) {
-                console.log("Success: release changed, updating board");
-                this.getContext().setTimeboxScope(release, 'release');
-                this.currentTimebox = release;
-                var filters = this._createReleaseFilter(release);
-                console.log("Filters created: ", filters);
-                this._updateGridBoard(filters);
-            } else {
-                console.log("Success Dashboard: Release change message, no change");
-            }
+        if (this.currentTimebox === null || release.get('Name') != this.currentTimebox.get('Name')) {
+            var releaseStartFilter = Ext.create('Rally.data.wsapi.Filter', {
+                property: "PlannedEndDate",
+                operator: ">=",
+                value: Rally.util.DateTime.toIsoString(release.get('ReleaseStartDate'))
+            });
+            var releaseEndFilter = Ext.create('Rally.data.wsapi.Filter', {
+                property: "PlannedEndDate",
+                operator: "<=",
+                value: Rally.util.DateTime.toIsoString(release.get('ReleaseDate'))
+            });
+            var timeboxFilter = releaseEndFilter.and(releaseStartFilter);
+            this.currentTimebox = release;
+            this.getContext().setTimeboxScope(release, 'release');
+            this._updateGridBoard(timeboxFilter);
+        } else {
+            console.log("aging tasks: Release change message, no change");
         }
     },
-    _createIterationFilter: function(iteration) {
-        console.log("Creating iteration filter: ", iteration);
-        var iterationStartFilter = Ext.create('Rally.data.wsapi.Filter', {
-            property: "PlannedEndDate",
-            operator: ">=",
-            value: Rally.util.DateTime.toIsoString(iteration.get('StartDate'))
-        });
-        var iterationEndFilter = Ext.create('Rally.data.wsapi.Filter', {
-            property: "PlannedEndDate",
-            operator: "<=",
-            value: Rally.util.DateTime.toIsoString(iteration.get('EndDate'))
-        });
-        return iterationStartFilter.and(iterationEndFilter);
-    },
     _iterationChanged: function(iteration) {
-        if (iteration !== null) {
-            console.log("Success Dashboard: Got iteration changed message", iteration);
-            if (_.isNull(this.currentTimebox) || iteration.get('Name') != this.currentTimebox.get('Name')) {
-                this.getContext().setTimeboxScope(iteration, 'iteration');
-                this.currentTimebox = iteration;
-                console.log("Success: iteration changed, updating board");
-                this._updateGridBoard(this._createIterationFilter(iteration));
-            } else {
-                console.log("Iteration change message, no change");
-            }
+        if (this.currentTimebox === null || iteration.get('Name') != this.currentTimebox.get('Name')) {
+            var iterationStartFilter = Ext.create('Rally.data.wsapi.Filter', {
+                property: "PlannedEndDate",
+                operator: ">=",
+                value: Rally.util.DateTime.toIsoString(iteration.get('StartDate'))
+            });
+            var iterationEndFilter = Ext.create('Rally.data.wsapi.Filter', {
+                property: "PlannedEndDate",
+                operator: "<=",
+                value: Rally.util.DateTime.toIsoString(iteration.get('EndDate'))
+            });
+            var timeboxFilter = iterationStartFilter.and(iterationEndFilter);
+            this.currentTimebox = iteration;
+            this.getContext().setTimeboxScope(iteration, 'iteration');
+            this._updateGridBoard(timeboxFilter);
+        } else {
+            console.log("tasks: iteration change message, no change");
         }
     },
     _onLoad: function() {

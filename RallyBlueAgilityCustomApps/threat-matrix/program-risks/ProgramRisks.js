@@ -2,6 +2,10 @@ var app = null;
 Ext.define('ProgramRisks', {
     extend: 'Rally.app.App',
     currentTimebox: null,
+    layout: {
+        type: "fit"
+    },
+
     requires: [
         'Rally.ui.gridboard.plugin.GridBoardFieldPicker'
     ],
@@ -35,33 +39,30 @@ Ext.define('ProgramRisks', {
             enableBulkEdit: true,
             columnCfgs: [{
 
-                    dataIndex: 'FormattedID',
-                    width: 100
+                dataIndex: 'FormattedID',
+                width: 100
 
-                }, {
-                    dataIndex: 'Name',
-                    width: 500
-                },
-
-                {
-                    dataIndex: 'State',
-                    width: 100
-                }, {
-                    dataIndex: 'Owner',
-                    width: 100
-                }, {
-                    dataIndex: 'c_RiskDescription',
-                    width: 600
-                }, {
-                    text: 'Age (Days)',
-                    dataIndex: 'CreationDate',
-                    width: 60,
-                    renderer: function(value) {
-                        var today = new Date();
-                        return Math.floor((today - value) / (1000 * 60 * 60 * 24));
-                    }
+            }, {
+                dataIndex: 'Name',
+                flex: 1
+            }, {
+                dataIndex: 'Owner',
+                flex: 0.5
+            }, {
+                dataIndex: 'State',
+                width: 100
+            }, {
+                dataIndex: 'c_RiskDescription',
+                flex: 2
+            }, {
+                text: 'Age (Days)',
+                dataIndex: 'CreationDate',
+                width: 60,
+                renderer: function(value) {
+                    var today = new Date();
+                    return Math.floor((today - value) / (1000 * 60 * 60 * 24));
                 }
-            ],
+            }],
             context: this.getContext(),
             storeConfig: {
                 models: [

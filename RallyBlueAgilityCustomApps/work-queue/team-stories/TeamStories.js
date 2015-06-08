@@ -2,6 +2,9 @@ var app = null;
 Ext.define('TeamStories', {
         extend : 'Rally.app.App',
         currentTimebox : null,
+        layout : {
+            type : "fit"
+        },
         mixins : [
             'Rally.Messageable'
         ],
@@ -70,26 +73,38 @@ Ext.define('TeamStories', {
         },
         _releaseChanged : function(release)
         {
-            if (this.currentTimebox === null || release.get('Name') != this.currentTimebox.get('Name'))
+            console.log("Team stories: got release change", release, this.currentTimebox);
+            if (release !== null)
             {
+                // if (this.currentTimebox === null || release.get('Name') !=
+                // this.currentTimebox.get('Name'))
+                // {
                 this.currentTimebox = release;
                 this.getContext().setTimeboxScope(release, 'release');
                 this._updateBoard();
-            } else
-            {
-                console.log("aging tasks: Release change message, no change");
+                // } else
+                // {
+                // console.log("Team stories: Release change message, no
+                // change");
+                // }
             }
         },
         _iterationChanged : function(iteration)
         {
-            if (this.currentTimebox === null || iteration.get('Name') != this.currentTimebox.get('Name'))
+            console.log("Team stories: got iteration change", iteration, this.currentTimebox);
+            if (iteration !== null)
             {
+                // if (this.currentTimebox === null || iteration.get('Name') !=
+                // this.currentTimebox.get('Name'))
+                // {
                 this.currentTimebox = iteration;
                 this.getContext().setTimeboxScope(iteration, 'iteration');
                 this._updateBoard();
-            } else
-            {
-                console.log("tasks: iteration change message, no change");
+                // } else
+                // {
+                // console.log("Team stories: iteration change message, no
+                // change");
+                // }
             }
         }
 });
