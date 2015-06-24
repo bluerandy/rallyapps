@@ -247,49 +247,56 @@ Ext.define('Rally.apps.portfoliodrilldown.SuccessDashboardApp', {
     _getGridColumns: function() {
         var result = [{
             text: 'Name',
-            dataIndex: 'Name'
+            dataIndex: 'Name',
+            flex: 1
         }, {
             text: 'Value Metric/KPI',
-            dataIndex: 'c_ValueMetricKPI'
-        }, {
-            text: 'Value Score',
-            dataIndex: 'ValueScore',
-            xtype: 'numbercolumn'
+            dataIndex: 'c_ValueMetricKPI',
+            flex: 1
         }, {
             text: 'Story State',
-            dataIndex: 'ScheduleState'
+            dataIndex: 'ScheduleState',
+            flex: 0.5
         }, {
             text: '% Completed (By Points)',
-            dataIndex: 'PercentDoneByStoryPlanEstimate'
+            dataIndex: 'PercentDoneByStoryPlanEstimate',
+            flex: 0.5
         }, {
             text: 'Total Size (Points)',
-            dataIndex: 'LeafStoryPlanEstimateTotal'
+            dataIndex: 'LeafStoryPlanEstimateTotal',
+            flex: 0.3
         }, {
             text: 'Story Size (Points)',
-            dataIndex: 'PlanEstimate'
+            dataIndex: 'PlanEstimate',
+            flex: 0.3
         }, {
             text: 'Planned Start',
             dataIndex: 'PlannedStartDate',
             xtype: 'datecolumn',
-            format: 'n-j-Y'
+            format: 'n-j-Y',
+            flex: 0.4
         }, {
             text: 'Actual Start',
             dataIndex: 'ActualStartDate',
             xtype: 'datecolumn',
-            format: 'n-j-Y'
+            format: 'n-j-Y',
+            flex: 0.4
         }, {
             text: 'Planned End',
             dataIndex: 'PlannedEndDate',
             xtype: 'datecolumn',
-            format: 'n-j-Y'
+            format: 'n-j-Y',
+            flex: 0.4
         }, {
             text: 'Actual End',
             dataIndex: 'ActualEndDate',
             xtype: 'datecolumn',
-            format: 'n-j-Y'
+            format: 'n-j-Y',
+            flex: 0.4
         }, {
             text: 'Owner',
-            dataIndex: 'Owner'
+            dataIndex: 'Owner',
+            flex: 0.5
         }];
         return result;
     },
