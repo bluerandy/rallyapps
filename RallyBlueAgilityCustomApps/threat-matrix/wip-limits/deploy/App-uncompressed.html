@@ -1,18 +1,140 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>wip-limits</title>
+    <title>wip-limits</title>
 
-<script type="text/javascript" src="/apps/2.0rc3/sdk.js"></script>
+    <script type="text/javascript" src="/apps/2.0rc3/sdk.js"></script>
 
-<script type="text/javascript">
-    if (!window.location.origin)
-    {
-        window.location.origin = window.location.protocol + "//" + window.location.hostname + (window.location.port ? ':' + window.location.port : '');
-    }
-    Rally.onReady(function()
-    {
-        Ext.define('wip-limits', {
+    <script type="text/javascript">
+        Rally.onReady(function () {
+                //Ext.override(Rally.data.PreferenceManager, {
+//
+//                update : function(options)
+//                {
+//                    console.log('-->', options);
+//                    var store = this._buildPrefStore(options), updateOptions = options;
+//
+//                    return store.load().then({
+//                                    success : function()
+//                                    {
+//
+//                                        return this._updatePreferences(store, updateOptions);
+//                                    },
+//                                    scope : this
+//                    }).then({
+//                                    success : function(records)
+//                                    {
+//                                        this._onPrefUpdate(records, updateOptions);
+//                                        return records;
+//                                    },
+//                                    scope : this
+//                    });
+//                },
+//
+//                _updatePreferences : function(store, options)
+//                {
+//                    console.log('_updatePref', store, options);
+//                    Ext.Object.each(options.settings, function(settingName, settingValue)
+//                    {
+//                        var existingPref = store.findExactRecord('Name', settingName);
+//
+//                        if (existingPref)
+//                        {
+//                            existingPref.set('Value', settingValue);
+//                        } else
+//                        {
+//                            var pref = {
+//                                            Name : settingName,
+//                                            Value : settingValue,
+//                                            Project : Rally.util.Ref.getRelativeUri(options.project) || null
+//                            };
+//                            if (options.appID)
+//                            {
+//                                pref.AppId = options.appID;
+//                            }
+//                            if (options.filterByUser)
+//                            {
+//                                pref.User = this._getUserRef(options.filterByUser);
+//                            }
+//                            if (options.workspace)
+//                            {
+//                                pref.Project = null;
+//                                pref.Workspace = Rally.util.Ref.getRelativeUri(options.workspace);
+//                            }
+//                            store.add(pref);
+//                        }
+//
+//                    }, this);
+//
+//                    var deferred = Ext.create('Deft.Deferred');
+//                    var recordsToUpdate = store.getNewRecords().concat(store.getUpdatedRecords());
+//
+//                    Rally.data.BulkRecordUpdater.updateRecords({
+//                                    records : recordsToUpdate,
+//                                    success : function()
+//                                    {
+//                                        var cachedPrefValue = this._convertRecordsToCachedPrefValue(store.getRecords());
+//                                        this._setCachedPref(cachedPrefValue, options);
+//                                        deferred.resolve(recordsToUpdate);
+//                                    },
+//                                    scope : this
+//                    });
+//
+//                    return deferred.promise;
+//                },
+//                _buildPrefStore : function(options)
+//                {
+//                    var filters = [];
+//                    if (options.appID)
+//                    {
+//                        filters.push({
+//                                        property : 'AppId',
+//                                        value : options.appID
+//                        });
+//                    }
+//                    if (options.filterByUser)
+//                    {
+//                        filters.push({
+//                                        property : 'User',
+//                                        value : this._getUserRef(options.filterByUser)
+//                        });
+//                    }
+//                    if (options.filterByName)
+//                    {
+//                        filters.push({
+//                                        property : 'Name',
+//                                        value : options.filterByName
+//                        });
+//                    }
+//                    if (options.hasOwnProperty('project'))
+//                    {
+//                        filters.push({
+//                                        property : 'Project',
+//                                        value : Rally.util.Ref.getRelativeUri(options.project) || null
+//                        });
+//                    }
+//                    if (options.hasOwnProperty('workspace'))
+//                    {
+//                        filters.push({
+//                                        property : 'Workspace',
+//                                        value : Rally.util.Ref.getRelativeUri(options.workspace) || null
+//                        });
+//                    }
+//
+//                    filters = filters.concat(options.additionalFilters || []);
+//
+//                    return Ext.create('Rally.data.wsapi.Store', {
+//                                    requester : options.requester,
+//                                    model : Ext.identityFn('preference'),
+//                                    limit : 'Infinity',
+//                                    filters : filters,
+//                                    context : Rally.environment.getContext().getDataContext()
+//                    });
+//                }
+//
+//});
+
+Ext.define('wip-limits', {
                 extend : 'Rally.app.App',
                 layout : {
                     type : "fit"
@@ -27,14 +149,14 @@
                 _updateBoard : function(portfolioTimeboxFilter, storyTimeboxFilter)
                 {
                     var store = Ext.create('Rally.data.wsapi.Store', {
-                            model : 'hierarchicalrequirement',
-                            fetch : [
-                                            'Name',
-                                            'FormattedID',
-                                            'Project',
-                                            'ScheduleState'
-                            ],
-                            limit : Infinity
+                                    model : 'hierarchicalrequirement',
+                                    fetch : [
+                                                    'Name',
+                                                    'FormattedID',
+                                                    'Project',
+                                                    'ScheduleState'
+                                    ],
+                                    limit : Infinity
                     });
                     store.on('load', this._onStoriesLoaded, this);
                     store.load();
@@ -72,11 +194,11 @@
                         return values;
                     }, this);
                     me.newStore = Ext.create('Rally.data.custom.Store', {
-                            data : me.summaries,
-                            sorters : {
-                                    property : 'project',
-                                    direction : 'ASC'
-                            }
+                                    data : me.summaries,
+                                    sorters : {
+                                                    property : 'project',
+                                                    direction : 'ASC'
+                                    }
                     });
                     _.each(me.summaries, function(row)
                     {
@@ -105,67 +227,67 @@
                     var that = this;
                     this.remove('workqueue');
                     this.add({
-                            xtype : 'rallygrid',
-                            itemId : 'workqueue',
-                            enablebulkeditable : true,
-                            enableEditing : true,
-                            store : store,
-                            columnCfgs : [
-                                            {
-                                                    text : 'Project',
-                                                    dataIndex : 'project',
-                                                    flex : 5,
-                                                    align : 'center'
-                                            },
-                                            {
-                                                    text : 'Defined',
-                                                    dataIndex : 'Defined',
-                                                    flex : 0.8,
-                                                    align : 'center'
-                                            },
-                                            {
-                                                    text : 'Defined Limit',
-                                                    dataIndex : 'DefinedWIP',
-                                                    flex : 0.8,
-                                                    editor : {
-                                                        xtype : 'textfield'
+                                    xtype : 'rallygrid',
+                                    itemId : 'workqueue',
+                                    enablebulkeditable : true,
+                                    enableEditing : true,
+                                    store : store,
+                                    columnCfgs : [
+                                                    {
+                                                                    text : 'Project',
+                                                                    dataIndex : 'project',
+                                                                    flex : 6,
+                                                                    align : 'center'
                                                     },
-                                                    renderer : that.renderLimit,
-                                                    align : 'center'
-                                            },
-                                            {
-                                                    text : 'In-Progress',
-                                                    dataIndex : 'In-Progress',
-                                                    flex : 0.8,
-                                                    align : 'center'
-                                            },
-                                            {
-                                                    text : 'In-Progress Limit',
-                                                    dataIndex : 'In-ProgressWIP',
-                                                    flex : 0.8,
-                                                    editor : {
-                                                        xtype : 'textfield'
+                                                    {
+                                                                    text : 'Defined',
+                                                                    dataIndex : 'Defined',
+                                                                    flex : 0.8,
+                                                                    align : 'center'
                                                     },
-                                                    renderer : that.renderLimit,
-                                                    align : 'center'
-                                            },
-                                            {
-                                                    text : 'Completed',
-                                                    dataIndex : 'Completed',
-                                                    flex : 0.8,
-                                                    align : 'center'
-                                            },
-                                            {
-                                                    text : 'Completed Limit',
-                                                    dataIndex : 'CompletedWIP',
-                                                    flex : 0.8,
-                                                    editor : {
-                                                        xtype : 'textfield'
+                                                    {
+                                                                    text : 'Defined Limit',
+                                                                    dataIndex : 'DefinedWIP',
+                                                                    flex : 0.8,
+                                                                    editor : {
+                                                                        xtype : 'textfield'
+                                                                    },
+                                                                    renderer : that.renderLimit,
+                                                                    align : 'center'
                                                     },
-                                                    renderer : that.renderLimit,
-                                                    align : 'center'
-                                            }
-                            ]
+                                                    {
+                                                                    text : 'In-Progress',
+                                                                    dataIndex : 'In-Progress',
+                                                                    flex : 0.8,
+                                                                    align : 'center'
+                                                    },
+                                                    {
+                                                                    text : 'In-Progress Limit',
+                                                                    dataIndex : 'In-ProgressWIP',
+                                                                    flex : 0.8,
+                                                                    editor : {
+                                                                        xtype : 'textfield'
+                                                                    },
+                                                                    renderer : that.renderLimit,
+                                                                    align : 'center'
+                                                    },
+                                                    {
+                                                                    text : 'Completed',
+                                                                    dataIndex : 'Completed',
+                                                                    flex : 0.8,
+                                                                    align : 'center'
+                                                    },
+                                                    {
+                                                                    text : 'Completed Limit',
+                                                                    dataIndex : 'CompletedWIP',
+                                                                    flex : 0.8,
+                                                                    editor : {
+                                                                        xtype : 'textfield'
+                                                                    },
+                                                                    renderer : that.renderLimit,
+                                                                    align : 'center'
+                                                    }
+                                    ]
                     });
                 },
                 renderLimit : function(value, meta, record, row, col, store, gridView)
@@ -194,16 +316,18 @@
                     settings[key] = Ext.JSON.encode(limit);
                     var workspace = this.getContext().getWorkspace();
                     Rally.data.PreferenceManager.update({
-                            workspace : workspace,
-                            settings : settings
+                                    workspace : workspace,
+                                    filterByName : key,
+                                    settings : settings
                     }).then({
-                            success : function(updatedRecords, notUpdatedRecord, options)
-                            {
-                            },
-                            failure : function()
-                            {
-                                console.log("Failed to write preference: ", key, settings);
-                            }
+                                    success : function(updatedRecords, notUpdatedRecord, options)
+                                    {
+                                        console.log("Wrote WIP limit: ", key, settings, updatedRecords, notUpdatedRecord, options);
+                                    },
+                                    failure : function()
+                                    {
+                                        console.log("Failed to write preference: ", key, settings);
+                                    }
                     });
                 },
                 _getWipKey : function(project, state)
@@ -217,44 +341,49 @@
                     var workspace = this.getContext().getWorkspace();
                     console.log('workspace: ', workspace);
                     Rally.data.PreferenceManager.load({
-                            workspace : workspace,
-                            filterByName : key,
-                            success : function(prefs)
-                            {
-                                if (prefs && prefs[key])
-                                {
-                                    var value = prefs[key];
-                                    var row = _.find(me.summaries, function(r)
+                                    workspace : workspace,
+                                    filterByName : key,
+                                    success : function(prefs)
                                     {
-                                        return r.project === project;
-                                    });
-                                    row[state] = Ext.JSON.decode(value);
-                                    me.newStore.load();
-                                }
-                            },
-                            failure : function()
-                            {
-                                console.log("Failed to get WIP limit: ", key);
-                            }
+                                        if (prefs && prefs[key])
+                                        {
+                                            var value = prefs[key];
+                                            var row = _.find(me.summaries, function(r)
+                                            {
+                                                return r.project === project;
+                                            });
+                                            row[state] = Ext.JSON.decode(value);
+                                            console.log("getWipLimit: key, prefs, row, state, value", key, prefs, row, state, value);
+                                            me.newStore.load();
+                                        }
+                                    },
+                                    failure : function()
+                                    {
+                                        console.log("Failed to get WIP limit: ", key);
+                                    }
                     });
                 }
+});
+
+
+            Rally.launchApp('wip-limits', {
+                name:"wip-limits",
+	            parentRepos:""
+            });
+
         });
-        Rally.launchApp('wip-limits', {
-                name : "wip-limits",
-                parentRepos : ""
-        });
-    });
-</script>
+    </script>
 
 
 
-<style type="text/css">
-.limit {
-	background-color: #d9d9d9 !important;
-	color: black;
-	font-weight: bold;
+    <style type="text/css">
+        .limit {
+  background-color: #d9d9d9 !important;
+  color: black;
+  font-weight: bold;
 }
-</style>
+
+    </style>
 </head>
 <body>
 </body>
