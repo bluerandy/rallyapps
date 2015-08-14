@@ -25,14 +25,14 @@
                                 ],
                                 launch : function()
                                 {
-                                    console.log("timebox launch");
+                                    // me.logger.log("timebox launch");
                                     this.stateId = Rally.environment.getContext().getScopedStateId('timebox-filter');
                                     this._createReleaseCombo();
                                     this.subscribe(this, 'requestTimebox', this._requestTimebox, this);
                                 },
                                 _requestTimebox : function(source)
                                 {
-                                    console.log('Got request timebox message', source);
+                                    // me.logger.log('Got request timebox message', source);
                                     if (this.currentTimebox !== null)
                                     {
                                         if (this.currentTimebox.get('ReleaseDate'))
@@ -47,7 +47,7 @@
                                 _createReleaseCombo : function()
                                 {
                                     var that = this;
-                                    console.log("Creating release combo...");
+                                    // me.logger.log("Creating release combo...");
                                     this._releaseCombo = this.add({
                                             xtype : 'rallyreleasecombobox',
                                             fieldLabel : 'Program Increment',
@@ -79,7 +79,7 @@
                                 _updateIterationCombo : function(release)
                                 {
                                     var that = this;
-                                    console.log("Creating iteration combo...");
+                                    // me.logger.log("Creating iteration combo...");
                                     this.remove('globaliterationpicker');
                                     var endFilter = Ext.create('Rally.data.wsapi.Filter', {
                                             property : "EndDate",
@@ -1377,7 +1377,7 @@
                                                                             var planEstimate = (record.get('PreliminaryEstimate') && record.get('PreliminaryEstimate').Value) || 1;
                                                                             var pointSizeForChildren = (planEstimate / relatedCount) || 1;
                                                                             var nullPointString = 'No stories.';
-                                                                            //console.log(record.get('Name'), relatedCount, planEstimate, pointSizeForChildren);
+                                                                            //// me.logger.log(record.get('Name'), relatedCount, planEstimate, pointSizeForChildren);
                                                                             this._addPointForTopLevelItem(record, relatedCount);
                                                                             if (relatedCount === 0)
                                                                             {
@@ -1513,7 +1513,7 @@
                                                                         var colorObject;
                                                                         colorObject = Rally.util.HealthColorCalculator.calculateHealthColorForPortfolioItemData(record.data, 'PercentDoneByStoryCount');
                                                                         color = colorObject.hex;
-                                                                        //console.log(record.get('Name'), pointSize, record.get('PreliminaryEstimate') && record.get('PreliminaryEstimate').Value);
+                                                                        //// me.logger.log(record.get('Name'), pointSize, record.get('PreliminaryEstimate') && record.get('PreliminaryEstimate').Value);
                                                                         this._chartData.push({
                                                                                 name : record.get('FormattedID'),
                                                                                 y : pointSize,
@@ -2511,31 +2511,31 @@
                                 },
                                 _releaseChanged : function(release)
                                 {
-                                    console.log("Visualization banner: Got release changed message: ", release);
+                                    // me.logger.log("Visualization banner: Got release changed message: ", release);
                                     if (this.currentTimebox === null || release.get('Name') != this.currentTimebox.get('Name'))
                                     {
-                                        console.log("visual release: setting timebox");
+                                        // me.logger.log("visual release: setting timebox");
                                         this.currentTimebox = release;
-                                        console.log("visual release: setting context timebox");
+                                        // me.logger.log("visual release: setting context timebox");
                                         this.getContext().setTimeboxScope(release, 'release');
                                         this._updateStatsBanner();
                                     } else
                                     {
-                                        console.log("Visualization: Release change message, no change");
+                                        // me.logger.log("Visualization: Release change message, no change");
                                     }
                                 },
                                 _iterationChanged : function(iteration)
                                 {
-                                    console.log("Visualization banner: Got iteration changed message: ", iteration);
+                                    // me.logger.log("Visualization banner: Got iteration changed message: ", iteration);
                                     if (this.currentTimebox === null || iteration.get('Name') != this.currentTimebox.get('Name'))
                                     {
-                                        console.log("visual iteration: setting timebox");
+                                        // me.logger.log("visual iteration: setting timebox");
                                         this.currentTimebox = iteration;
                                         // this.getContext().setTimeboxScope(iteration, 'iteration');
                                         this._updateStatsBanner();
                                     } else
                                     {
-                                        console.log("Visualization: iteration change message, no change");
+                                        // me.logger.log("Visualization: iteration change message, no change");
                                     }
                                 },
                                 _updateStatsBanner : function()

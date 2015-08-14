@@ -99,13 +99,13 @@ Ext.define('field-maintenance', {
                     'PortfolioItem' : portfolio_filter,
                     'HierarchicalRequirement' : story_filter
             };
-            console.log('Queries made...');
+            // me.logger.log('Queries made...');
             var promises = [];
             Ext.Object.each(queries_to_run, function(model_name, add_filter)
             {
                 var p = function()
                 {
-                    console.log('Loading ' + model_name);
+                    // me.logger.log('Loading ' + model_name);
                     return me._loadAStoreWithAPromise(model_name, field_names, add_filter);
                 };
                 promises.push(p);
@@ -114,7 +114,7 @@ Ext.define('field-maintenance', {
                     scope : this,
                     success : function(results)
                     {
-                        console.log("Processing results");
+                        // me.logger.log("Processing results");
                         var records = Ext.Array.flatten(results);
                         var finalRecords = [];
                         Ext.Array.each(records, function(record)

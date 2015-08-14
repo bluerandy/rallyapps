@@ -94,9 +94,9 @@
       },
 
       getChildModelTypePaths: function(parentTypes) {
-        //console.log('gcmtp', parentTypes);
+        //// me.logger.log('gcmtp', parentTypes);
         return _.reduce(Ext.Array.from(parentTypes), function(childTypes, parentType) {
-          //console.log(childTypes, parentType, this.parentChildTypeMap[parentType]);
+          //// me.logger.log(childTypes, parentType, this.parentChildTypeMap[parentType]);
           return _.union(childTypes, _.pluck(this.parentChildTypeMap[parentType], "typePath"));
         }, [], this);
       }
@@ -225,7 +225,7 @@
 
     onBeforeExpandNode: function (node, eOpts) {
       this.expandingNode = node;
-      //console.log('expanding', node);
+      //// me.logger.log('expanding', node);
     },
 
     isHierarchyEnabled: function() {
@@ -264,25 +264,25 @@
 
       var parentFieldNames = [];
       if(this.enableHierarchy) {
-        //console.log('gct', this.getChildTypes());
+        //// me.logger.log('gct', this.getChildTypes());
         _.each(this.getChildTypes(), function (type) {
           parentFieldNames = _.union(parentFieldNames, this.getParentFieldTypesByChildType(type.toLowerCase()));
         }, this);
       }
 
-      //console.log('pfn', parentFieldNames);
+      //// me.logger.log('pfn', parentFieldNames);
       var entp = this.getExpandingNodeTypePath().toLowerCase();
 
       if (entp === 'hierarchicalrequirement') {
-        //console.log('US -> US');
+        //// me.logger.log('US -> US');
         parentFieldNames = _.difference(parentFieldNames, ['PortfolioItem']);
       }
 
       if (entp.indexOf('portfolioitem') >= 0 && _.contains(this.getChildTypes(), 'hierarchicalrequirement')) {
-        //console.log('PI -> US');
+        //// me.logger.log('PI -> US');
         parentFieldNames = ['PortfolioItem'];
       }
-      //console.log('pfn after', parentFieldNames);
+      //// me.logger.log('pfn after', parentFieldNames);
 
       return parentFieldNames;
     },
@@ -290,7 +290,7 @@
     getParentFieldTypesByChildType: function(childType) {
       //var model = this.model.getArtifactComponentModel(childType);
       var model = this._getModelFromTypePath(childType);
-      //console.log(childType);
+      //// me.logger.log(childType);
       return _.filter(this.self.childToParentTypeMap[childType.toLowerCase()], function(field) {
         if (_.isFunction(this.model.getArtifactComponentModel)) {
           return this.model.getArtifactComponentModel(field) || model.hasField(field);
@@ -303,13 +303,13 @@
     getExpandingNodeTypePath: function () {
       var r = this.parentTypes[0];
 
-      //console.log('this.expandingNode', this.expandingNode);
-      //console.log('isRoot', this.isRootNode(this.expandingNode));
+      //// me.logger.log('this.expandingNode', this.expandingNode);
+      //// me.logger.log('isRoot', this.isRootNode(this.expandingNode));
       if (this.expandingNode && !this.isRootNode(this.expandingNode)) {
         r = this.expandingNode.get('_type');
       }
 
-      //console.log('gentp', r.toLowerCase());
+      //// me.logger.log('gentp', r.toLowerCase());
       return r.toLowerCase();
     },
 
@@ -317,10 +317,10 @@
       if(this.enableHierarchy) {
         if (this.expandingNode && this.isRootNode(this.expandingNode)) {
           //return _.intersection(this._getModelTypePaths(), this.self.getChildModelTypePaths(this.parentTypes));
-          //console.log('returning parentTypes', this.parentTypes);
+          //// me.logger.log('returning parentTypes', this.parentTypes);
           return this.parentTypes;
         }
-        //console.log('gct', this.getExpandingNodeTypePath(), this.self.getChildModelTypePaths(this.getExpandingNodeTypePath()), this.self.expandedCollectionNames);
+        //// me.logger.log('gct', this.getExpandingNodeTypePath(), this.self.getChildModelTypePaths(this.getExpandingNodeTypePath()), this.self.expandedCollectionNames);
 
         return this.self.getChildModelTypePaths(Ext.Array.from(this.getExpandingNodeTypePath()));
       }
@@ -422,10 +422,10 @@
       // HACK: The list of fields can become too long and cause a 413 error. This fixes the error at the cost of a fetch=true
       options.fetch = true;
 
-      //console.log('options', options);
-      //console.log('gENTY', this.getExpandingNodeTypePath());
-      //console.log('pT', this.parentTypes);
-      //console.log(_.contains(this.parentTypes, this.getExpandingNodeTypePath()));
+      //// me.logger.log('options', options);
+      //// me.logger.log('gENTY', this.getExpandingNodeTypePath());
+      //// me.logger.log('pT', this.parentTypes);
+      //// me.logger.log(_.contains(this.parentTypes, this.getExpandingNodeTypePath()));
 
       if (this.expandingNodesRespectProjectScoping ||
           this.isRootNode(this.expandingNode) ||
@@ -573,7 +573,7 @@
         }
       }
 
-      //console.log('onProzyLoad', operation);
+      //// me.logger.log('onProzyLoad', operation);
 
       this._attemptingToResetCurrentPage = false;
 
@@ -781,10 +781,10 @@
     _getLeafCount: function(record) {
       var typePath = record.get('_type').toLowerCase(),
       expandedCollectionNames = Ext.Array.from(this.self.expandedCollectionNames[typePath]);
-      //console.log(this.self.expandedCollectionNames, typePath, this.self.expandedCollectionNames[typePath]);
+      //// me.logger.log(this.self.expandedCollectionNames, typePath, this.self.expandedCollectionNames[typePath]);
 
       return _.reduce(expandedCollectionNames, function(accumulator, collectionName) {
-        //console.log(collectionName, record.get(collectionName));
+        //// me.logger.log(collectionName, record.get(collectionName));
         //console.dir(record);
         var collectionVal = record.get(collectionName);
         if (collectionVal && collectionVal.Count) {

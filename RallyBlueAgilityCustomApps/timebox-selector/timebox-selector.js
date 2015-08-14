@@ -10,14 +10,14 @@ Ext.define('rally.app.timebox-selector', {
         ],
         launch : function()
         {
-            console.log("timebox launch");
+            // me.logger.log("timebox launch");
             this.stateId = Rally.environment.getContext().getScopedStateId('timebox-filter');
             this._createReleaseCombo();
             this.subscribe(this, 'requestTimebox', this._requestTimebox, this);
         },
         _requestTimebox : function(source)
         {
-            console.log('Got request timebox message', source);
+            // me.logger.log('Got request timebox message', source);
             if (this.currentTimebox !== null)
             {
                 if (this.currentTimebox.get('ReleaseDate'))
@@ -32,7 +32,7 @@ Ext.define('rally.app.timebox-selector', {
         _createReleaseCombo : function()
         {
             var that = this;
-            console.log("Creating release combo...");
+            // me.logger.log("Creating release combo...");
             this._releaseCombo = this.add({
                     xtype : 'rallyreleasecombobox',
                     fieldLabel : 'Program Increment',
@@ -64,7 +64,7 @@ Ext.define('rally.app.timebox-selector', {
         _updateIterationCombo : function(release)
         {
             var that = this;
-            console.log("Creating iteration combo...");
+            // me.logger.log("Creating iteration combo...");
             this.remove('globaliterationpicker');
             var endFilter = Ext.create('Rally.data.wsapi.Filter', {
                     property : "EndDate",

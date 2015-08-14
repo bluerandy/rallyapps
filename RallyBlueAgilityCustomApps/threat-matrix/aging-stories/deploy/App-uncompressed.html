@@ -5,9 +5,6 @@
     <title>Aging Stories</title>
     <script type="text/javascript" src="/apps/2.0rc3/sdk.js"></script>
     <script type="text/javascript">
-    if (!window.location.origin) {
-        window.location.origin = window.location.protocol + "//" + window.location.hostname + (window.location.port ? ':' + window.location.port : '');
-    }
     Rally.onReady(function() {
         Ext.define('AgingStories', {
             extend: 'Rally.app.App',
@@ -79,7 +76,7 @@
                     this.getContext().setTimeboxScope(release, 'release');
                     this._updateBoard();
                 } else {
-                    console.log("aging stories: Release change message, no change");
+                    // me.logger.log("aging stories: Release change message, no change");
                 }
             },
             _iterationChanged: function(iteration) {
@@ -88,7 +85,7 @@
                     this.getContext().setTimeboxScope(iteration, 'iteration');
                     this._updateBoard();
                 } else {
-                    console.log("Visualization: iteration change message, no change");
+                    // me.logger.log("Visualization: iteration change message, no change");
                 }
             }
         });
@@ -179,7 +176,7 @@
 
                 Ext.Array.each(cols, function(col, colIndex) {
                     if (col.hidden !== true) {
-                        console.log('header: ', col.text);
+                        // me.logger.log('header: ', col.text);
                         sheet.cells(1, colIndex + 1).value = col.text;
                     }
                 });

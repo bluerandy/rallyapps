@@ -69,7 +69,7 @@ Ext.define('AgingTasks', {
             this.getContext().setTimeboxScope(release, 'release');
             this._updateBoard();
         } else {
-            console.log("aging tasks: Release change message, no change");
+            // me.logger.log("aging tasks: Release change message, no change");
         }
     },
     _iterationChanged: function(iteration) {
@@ -78,7 +78,7 @@ Ext.define('AgingTasks', {
             this.getContext().setTimeboxScope(iteration, 'iteration');
             this._updateBoard();
         } else {
-            console.log("tasks: iteration change message, no change");
+            // me.logger.log("tasks: iteration change message, no change");
         }
     }
 });

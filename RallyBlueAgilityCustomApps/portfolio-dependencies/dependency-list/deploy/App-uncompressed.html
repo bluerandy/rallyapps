@@ -58,11 +58,11 @@
                 });
             },
             _updateGrid: function(myStore) {
-                console.log("Updating Grid");
+                // me.logger.log("Updating Grid");
                 this._myGrid.reconfigure(myStore);
             },
             onTimeboxScopeChange: function(newTimeboxScope) {
-                // console.log("Timebox Changed called");
+                // // me.logger.log("Timebox Changed called");
                 var newFilter = (newTimeboxScope.getQueryFilter());
                 var store = this._myGrid.getStore();
                 store.clearFilter(true);
@@ -156,7 +156,7 @@
 
                 Ext.Array.each(cols, function(col, colIndex) {
                     if (col.hidden !== true) {
-                        console.log('header: ', col.text);
+                        // me.logger.log('header: ', col.text);
                         sheet.cells(1, colIndex + 1).value = col.text;
                     }
                 });

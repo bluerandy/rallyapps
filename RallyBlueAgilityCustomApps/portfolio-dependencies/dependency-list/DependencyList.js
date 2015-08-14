@@ -45,12 +45,12 @@ Ext.define('DependencyList', {
         });
     },
     _updateGrid: function(myStore) {
-        console.log("Updating Grid");
+        // me.logger.log("Updating Grid");
         this._myGrid.reconfigure(myStore);
     },
 
     onTimeboxScopeChange: function(newTimeboxScope) {
-        // console.log("Timebox Changed called");
+        // // me.logger.log("Timebox Changed called");
         var newFilter = (newTimeboxScope.getQueryFilter());
         var store = this._myGrid.getStore();
         store.clearFilter(true);

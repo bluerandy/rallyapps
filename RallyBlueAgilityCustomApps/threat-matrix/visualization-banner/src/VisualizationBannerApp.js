@@ -35,31 +35,31 @@ Ext.define('Rally.apps.releasetracking.VisualizationBannerApp', {
         },
         _releaseChanged : function(release)
         {
-            console.log("Visualization banner: Got release changed message: ", release);
+            // me.logger.log("Visualization banner: Got release changed message: ", release);
             if (this.currentTimebox === null || release.get('Name') != this.currentTimebox.get('Name'))
             {
-                console.log("visual release: setting timebox");
+                // me.logger.log("visual release: setting timebox");
                 this.currentTimebox = release;
-                console.log("visual release: setting context timebox");
+                // me.logger.log("visual release: setting context timebox");
                 this.getContext().setTimeboxScope(release, 'release');
                 this._updateStatsBanner();
             } else
             {
-                console.log("Visualization: Release change message, no change");
+                // me.logger.log("Visualization: Release change message, no change");
             }
         },
         _iterationChanged : function(iteration)
         {
-            console.log("Visualization banner: Got iteration changed message: ", iteration);
+            // me.logger.log("Visualization banner: Got iteration changed message: ", iteration);
             if (this.currentTimebox === null || iteration.get('Name') != this.currentTimebox.get('Name'))
             {
-                console.log("visual iteration: setting timebox");
+                // me.logger.log("visual iteration: setting timebox");
                 this.currentTimebox = iteration;
                 // this.getContext().setTimeboxScope(iteration, 'iteration');
                 this._updateStatsBanner();
             } else
             {
-                console.log("Visualization: iteration change message, no change");
+                // me.logger.log("Visualization: iteration change message, no change");
             }
         },
         _updateStatsBanner : function()

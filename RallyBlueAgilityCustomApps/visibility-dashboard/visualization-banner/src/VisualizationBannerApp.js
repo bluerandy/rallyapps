@@ -23,7 +23,7 @@ Ext.define('Rally.apps.releasetracking.VisualizationBannerApp', {
         },
         launch : function()
         {
-            console.log("Launching banner app...");
+            // me.logger.log("Launching banner app...");
             this.subscribe(this, 'timeboxReleaseChanged', this._releaseChanged, this);
             this.subscribe(this, 'timeboxIterationChanged', this._iterationChanged, this);
             this.add({
@@ -33,21 +33,21 @@ Ext.define('Rally.apps.releasetracking.VisualizationBannerApp', {
         },
         _releaseChanged : function(release)
         {
-            console.log("Got release changed message: ", release);
+            // me.logger.log("Got release changed message: ", release);
             this.getContext().setTimeboxScope(release, 'release');
             this._updateStatsBanner();
         },
         _iterationChanged : function(iteration)
         {
             if (iteration === null)
-                console.log("iteration null");
-            console.log("Got iteration changed message: ", iteration);
+                // me.logger.log("iteration null");
+            // me.logger.log("Got iteration changed message: ", iteration);
 //            this.getContext().setTimeboxScope(iteration, 'iteration');
             this._updateStatsBanner();
         },
         _updateStatsBanner : function()
         {
-            console.log("Creating stats banner...");
+            // me.logger.log("Creating stats banner...");
             this.remove('statsBanner');
             this._statsBanner = this.add({
                     xtype : 'statsbanner',

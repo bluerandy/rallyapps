@@ -127,7 +127,7 @@ Ext.define('Rally.apps.portfoliodrilldown.VisibilityDashboardApp', {
             operator: '<'
         });
         var filters = timeboxFilter.and(childFilter).and(someCompleted);
-        console.log('Filters: ', timeboxFilter, filters);
+        // me.logger.log('Filters: ', timeboxFilter, filters);
         var context = this.getContext(),
             config = {
                 models: this._getModelNames(),
@@ -250,6 +250,10 @@ Ext.define('Rally.apps.portfoliodrilldown.VisibilityDashboardApp', {
             dataIndex: 'c_ValueMetricKPI',
             flex: 1
         }, {
+            text: 'Project',
+            dataIndex: 'Project',
+            flex: 0.5
+        },{
             text: 'Story State',
             dataIndex: 'ScheduleState',
             flex: 0.5
@@ -313,7 +317,7 @@ Ext.define('Rally.apps.portfoliodrilldown.VisibilityDashboardApp', {
             this.getContext().setTimeboxScope(release, 'release');
             this._updateGridBoard(timeboxFilter);
         } else {
-            console.log("aging tasks: Release change message, no change");
+            // me.logger.log("aging tasks: Release change message, no change");
         }
     },
     _iterationChanged: function(iteration) {
@@ -333,7 +337,7 @@ Ext.define('Rally.apps.portfoliodrilldown.VisibilityDashboardApp', {
             this.getContext().setTimeboxScope(iteration, 'iteration');
             this._updateGridBoard(timeboxFilter);
         } else {
-            console.log("tasks: iteration change message, no change");
+            // me.logger.log("tasks: iteration change message, no change");
         }
     },
     _onLoad: function() {

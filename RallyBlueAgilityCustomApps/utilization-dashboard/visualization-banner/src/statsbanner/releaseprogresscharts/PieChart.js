@@ -123,7 +123,7 @@
                 var pointSizeForChildren = (planEstimate / relatedCount) || 1;
                 var nullPointString = 'No stories.';
 
-                //console.log(record.get('Name'), relatedCount, planEstimate, pointSizeForChildren);
+                //// me.logger.log(record.get('Name'), relatedCount, planEstimate, pointSizeForChildren);
                 this._addPointForTopLevelItem(record, relatedCount);
 
                 if (relatedCount === 0) {
@@ -254,7 +254,7 @@
             colorObject = Rally.util.HealthColorCalculator.calculateHealthColorForPortfolioItemData(record.data, 'PercentDoneByStoryCount');
             color = colorObject.hex;
 
-            //console.log(record.get('Name'), pointSize, record.get('PreliminaryEstimate') && record.get('PreliminaryEstimate').Value);
+            //// me.logger.log(record.get('Name'), pointSize, record.get('PreliminaryEstimate') && record.get('PreliminaryEstimate').Value);
             this._chartData.push({
                 name: record.get('FormattedID'),
                 y: pointSize,

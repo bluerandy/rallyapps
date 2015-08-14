@@ -160,7 +160,7 @@ Ext.define('Rally.apps.grid.StoriesWithEpics', {
 
     },
     _getColumns: function(fetch) {
-        console.log("Getting columns for fetch: ", fetch);
+        // me.logger.log("Getting columns for fetch: ", fetch);
         var columns = Ext.Array.clone(fetch);
         Ext.Array.remove('PortfolioItem.FormattedID');
         Ext.Array.remove('PortfolioItem.Parent.FormattedID');
@@ -172,7 +172,7 @@ Ext.define('Rally.apps.grid.StoriesWithEpics', {
             text: 'Program Epic',
             dataIndex: 'PortfolioItem.Parent.FormattedID'
         });
-        console.log("Columns: ", columns);
+        // me.logger.log("Columns: ", columns);
         return columns;
     }
 });

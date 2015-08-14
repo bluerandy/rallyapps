@@ -31,7 +31,7 @@ Ext.define('ProgramRisks', {
             value: 'Done'
         });
         var filters = timeboxFilter.and(isRisk).and(notDone);
-        console.log("Risk filters: ", filters);
+        // me.logger.log("Risk filters: ", filters);
         this.remove('riskboard');
         this._myGrid = this.add({
             xtype: 'rallygrid',
@@ -93,7 +93,7 @@ Ext.define('ProgramRisks', {
             this.getContext().setTimeboxScope(release, 'release');
             this._updateBoard(timeboxFilter);
         } else {
-            console.log("aging tasks: Release change message, no change");
+            // me.logger.log("aging tasks: Release change message, no change");
         }
     },
     _iterationChanged: function(iteration) {
@@ -113,7 +113,7 @@ Ext.define('ProgramRisks', {
             this.getContext().setTimeboxScope(iteration, 'iteration');
             this._updateBoard(timeboxFilter);
         } else {
-            console.log("tasks: iteration change message, no change");
+            // me.logger.log("tasks: iteration change message, no change");
         }
     }
 });
