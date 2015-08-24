@@ -1,7 +1,6 @@
 package com.cigna.rally;
 
 import java.util.ArrayList;
-import java.util.Date;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
@@ -98,48 +97,7 @@ public class FixStoryPermissions extends RallyTask
 	public static void main(String[] args)
 	{
 		FixStoryPermissions task = new FixStoryPermissions();
-		try
-		{
-			task.addCommandLineOptions();
-			CommandLine commands = task.parseCommandLine(args, task.getClass().getSimpleName());
-			if (commands.hasOption("dw"))
-			{
-				task.destWorkspace = commands.getOptionValue("dw");
-			}
-			if (commands.hasOption("sw"))
-			{
-				task.sourceWorkspace = commands.getOptionValue("sw");
-			}
-			if (commands.hasOption("sp"))
-			{
-				task.sourceProjectName = commands.getOptionValue("sp");
-			}
-
-			if (commands.hasOption("children"))
-				task.includeChildren = true;
-
-			task.connectToRally();
-			task.performTask();
-			Date end = new Date();
-			Long elapsed = (end.getTime() - task.start.getTime()) / 1000;
-			task.log.info("Completed task, Total time: " + elapsed + " seconds");
-		}
-		catch (Throwable e)
-		{
-			task.log.error(e);
-		}
-		finally
-		{
-			try
-			{
-				if (task.restApi != null)
-					task.restApi.close();
-			}
-			catch (Throwable e)
-			{
-				task.log.error(e);
-			}
-		}
+		task.doIt(args);
 	}
 
 	@Override
@@ -158,5 +116,25 @@ public class FixStoryPermissions extends RallyTask
 		commandLineOptions.addOption(dw);
 
 		commandLineOptions.addOption("children", false, "Include child projects in the analysis");
+	}
+
+	@Override
+	public void parseTaskCommandLineOptions(CommandLine commands)
+	{
+		if (commands.hasOption("dw"))
+		{
+			destWorkspace = commands.getOptionValue("dw");
+		}
+		if (commands.hasOption("sw"))
+		{
+			sourceWorkspace = commands.getOptionValue("sw");
+		}
+		if (commands.hasOption("sp"))
+		{
+			sourceProjectName = commands.getOptionValue("sp");
+		}
+
+		if (commands.hasOption("children"))
+			includeChildren = true;
 	}
 }

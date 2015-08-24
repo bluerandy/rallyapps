@@ -13,7 +13,7 @@ import com.rallydev.rest.request.QueryRequest;
 import com.rallydev.rest.request.UpdateRequest;
 import com.rallydev.rest.response.QueryResponse;
 
-public class UpdateDefaultWorkspace extends RallyTask
+public class CopyUserCostCenter extends RallyTask
 {
 	private String		sourceProject;
 	protected String	sourceWorkspace		= "";
@@ -84,7 +84,7 @@ public class UpdateDefaultWorkspace extends RallyTask
 
 	public static void main(String[] args)
 	{
-		UpdateDefaultWorkspace task = new UpdateDefaultWorkspace();
+		CopyUserCostCenter task = new CopyUserCostCenter();
 		task.doIt(args);
 	}
 
@@ -123,5 +123,6 @@ public class UpdateDefaultWorkspace extends RallyTask
 		}
 		if (commands.hasOption("children"))
 			includeChildren = true;
+
 	}
 }

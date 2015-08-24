@@ -1,7 +1,6 @@
 package com.cigna.rally;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 
 import org.apache.commons.cli.CommandLine;
@@ -109,46 +108,7 @@ public class OpennessAndTransparencyMaker extends RallyTask
 	public static void main(String[] args)
 	{
 		OpennessAndTransparencyMaker task = new OpennessAndTransparencyMaker();
-		try
-		{
-			task.addCommandLineOptions();
-			CommandLine commands = task.parseCommandLine(args, task.getClass().getSimpleName());
-			if (commands.hasOption("children"))
-			{
-				task.includeChildren = true;
-			}
-			if (commands.hasOption("w"))
-			{
-				task.sourceWorkspace = commands.getOptionValue("w");
-			}
-			if (commands.hasOption("pr"))
-			{
-				task.sourceProject = commands.getOptionValue("pr");
-			}
-
-			task.connectToRally();
-
-			task.performTask();
-			Date end = new Date();
-			Long elapsed = (end.getTime() - task.start.getTime()) / 1000;
-			task.log.info("Completed task, Total time: " + elapsed + " seconds");
-		}
-		catch (Throwable e)
-		{
-			task.log.error(e);
-		}
-		finally
-		{
-			try
-			{
-				if (task.restApi != null)
-					task.restApi.close();
-			}
-			catch (Throwable e)
-			{
-				task.log.error(e);
-			}
-		}
+		task.doIt(args);
 	}
 
 	@Override
@@ -162,5 +122,22 @@ public class OpennessAndTransparencyMaker extends RallyTask
 		Option sw = new Option("w", "workspace", true, "Workspace to apply permissions");
 		sw.setRequired(true);
 		commandLineOptions.addOption(sw);
+	}
+
+	@Override
+	public void parseTaskCommandLineOptions(CommandLine commands)
+	{
+		if (commands.hasOption("children"))
+		{
+			includeChildren = true;
+		}
+		if (commands.hasOption("w"))
+		{
+			sourceWorkspace = commands.getOptionValue("w");
+		}
+		if (commands.hasOption("pr"))
+		{
+			sourceProject = commands.getOptionValue("pr");
+		}
 	}
 }

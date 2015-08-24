@@ -1,6 +1,5 @@
 package com.cigna.rally;
 
-import java.util.Date;
 import java.util.HashMap;
 
 import org.apache.commons.cli.CommandLine;
@@ -204,50 +203,7 @@ public class CopyProjectStructure extends RallyTask
 	public static void main(String[] args)
 	{
 		CopyProjectStructure task = new CopyProjectStructure();
-		try
-		{
-			task.addCommandLineOptions();
-			CommandLine commands = task.parseCommandLine(args, task.getClass().getSimpleName());
-			if (commands.hasOption("children"))
-			{
-				task.includeChildren = true;
-			}
-			if (commands.hasOption("dw"))
-			{
-				task.destWorkspace = commands.getOptionValue("dw");
-			}
-			if (commands.hasOption("sw"))
-			{
-				task.sourceWorkspace = commands.getOptionValue("sw");
-			}
-			if (commands.hasOption("sp"))
-			{
-				task.sourceProjectName = commands.getOptionValue("sp");
-			}
-
-			task.connectToRally();
-
-			task.performTask();
-			Date end = new Date();
-			Long elapsed = (end.getTime() - task.start.getTime()) / 1000;
-			task.log.info("Completed task, Total time: " + elapsed + " seconds");
-		}
-		catch (Throwable e)
-		{
-			task.log.error(e);
-		}
-		finally
-		{
-			try
-			{
-				if (task.restApi != null)
-					task.restApi.close();
-			}
-			catch (Throwable e)
-			{
-				task.log.error(e);
-			}
-		}
+		task.doIt(args);
 	}
 
 	@Override
@@ -265,5 +221,26 @@ public class CopyProjectStructure extends RallyTask
 		Option dw = new Option("dw", "destWorkspace", true, "Destination workspace name to copy to");
 		dw.setRequired(true);
 		commandLineOptions.addOption(dw);
+	}
+
+	@Override
+	public void parseTaskCommandLineOptions(CommandLine commands)
+	{
+		if (commands.hasOption("children"))
+		{
+			includeChildren = true;
+		}
+		if (commands.hasOption("dw"))
+		{
+			destWorkspace = commands.getOptionValue("dw");
+		}
+		if (commands.hasOption("sw"))
+		{
+			sourceWorkspace = commands.getOptionValue("sw");
+		}
+		if (commands.hasOption("sp"))
+		{
+			sourceProjectName = commands.getOptionValue("sp");
+		}
 	}
 }

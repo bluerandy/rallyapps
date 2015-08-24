@@ -57,7 +57,7 @@ public abstract class RallyTask
 		return project;
 	}
 
-	protected CommandLine parseCommandLine(String[] args, String className) throws Exception
+	protected void parseCommandLine(String[] args, String className) throws Exception
 	{
 		CommandLineParser parser = new BasicParser();
 		CommandLine commandLine = null;
@@ -93,7 +93,7 @@ public abstract class RallyTask
 		{
 			password = commandLine.getOptionValue("p");
 		}
-		return commandLine;
+		parseTaskCommandLineOptions(commandLine);
 	}
 
 	protected String getWorkspaceReference(String name) throws Exception
@@ -274,6 +274,39 @@ public abstract class RallyTask
 	public abstract void addTaskCommandLineOptions();
 
 	public abstract void performTask() throws Exception;
+
+	public abstract void parseTaskCommandLineOptions(CommandLine commands);
+
+	protected void doIt(String[] args)
+	{
+		try
+		{
+			addCommandLineOptions();
+			parseCommandLine(args, getClass().getSimpleName());
+			connectToRally();
+			performTask();
+			Date end = new Date();
+			Long elapsed = (end.getTime() - start.getTime()) / 1000;
+			log.info("Completed task, Total time: " + elapsed + " seconds");
+		}
+		catch (Throwable e)
+		{
+			log.error(e);
+		}
+		finally
+		{
+			try
+			{
+				if (restApi != null)
+					restApi.close();
+			}
+			catch (Throwable e)
+			{
+				log.error(e);
+			}
+		}
+
+	}
 
 	protected void printErrorsAndWarnings(Response response) throws Exception
 	{

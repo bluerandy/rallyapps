@@ -1,7 +1,6 @@
 package com.cigna.rally;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 
 import org.apache.commons.cli.CommandLine;
@@ -109,50 +108,7 @@ public class MakeProjectReadOnly extends RallyTask
 	public static void main(String[] args)
 	{
 		MakeProjectReadOnly task = new MakeProjectReadOnly();
-		try
-		{
-			task.addCommandLineOptions();
-			CommandLine commands = task.parseCommandLine(args, task.getClass().getSimpleName());
-			if (commands.hasOption("children"))
-			{
-				task.includeChildren = true;
-			}
-			if (commands.hasOption("admin"))
-			{
-				task.includeProjectAdmins = true;
-			}
-			if (commands.hasOption("sw"))
-			{
-				task.sourceWorkspace = commands.getOptionValue("sw");
-			}
-			if (commands.hasOption("sp"))
-			{
-				task.sourceProjectName = commands.getOptionValue("sp");
-			}
-
-			task.connectToRally();
-
-			task.performTask();
-			Date end = new Date();
-			Long elapsed = (end.getTime() - task.start.getTime()) / 1000;
-			task.log.info("Completed task, Total time: " + elapsed + " seconds");
-		}
-		catch (Throwable e)
-		{
-			task.log.error(e);
-		}
-		finally
-		{
-			try
-			{
-				if (task.restApi != null)
-					task.restApi.close();
-			}
-			catch (Throwable e)
-			{
-				task.log.error(e);
-			}
-		}
+		task.doIt(args);
 	}
 
 	@Override
@@ -167,5 +123,26 @@ public class MakeProjectReadOnly extends RallyTask
 		Option sw = new Option("sw", "sourceWorkspace", true, "Source workspace name to copy from");
 		sw.setRequired(true);
 		commandLineOptions.addOption(sw);
+	}
+
+	@Override
+	public void parseTaskCommandLineOptions(CommandLine commands)
+	{
+		if (commands.hasOption("children"))
+		{
+			includeChildren = true;
+		}
+		if (commands.hasOption("admin"))
+		{
+			includeProjectAdmins = true;
+		}
+		if (commands.hasOption("sw"))
+		{
+			sourceWorkspace = commands.getOptionValue("sw");
+		}
+		if (commands.hasOption("sp"))
+		{
+			sourceProjectName = commands.getOptionValue("sp");
+		}
 	}
 }
