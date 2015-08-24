@@ -1,0 +1,13 @@
+{
+   "name": "clarity-grid",
+   "className": "clarity-grid",
+   "server": "https://rally1.rallydev.com",
+   "sdk": "2.0rc3",
+   "javascript": [
+      "../_rally_logger.js",
+      "clarity-grid.js"
+   ],
+   "css": [
+      "app.css"
+   ]
+}
